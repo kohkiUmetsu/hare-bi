@@ -33,16 +33,25 @@ export type DailyMetricRow = {
   clicks: number | null;
   cpc: number | null;
   cvr: number | null;
+  mCv: number | null;
+  mCvr: number | null;
+  mCpa: number | null;
+  cpm: number | null;
   performanceBasedFee: number | null;
 };
 
 export type MetricSummary = {
   totalActualAdCost: number;
   totalCv: number;
+  totalImpressions: number;
   avgCpa: number;
   totalClicks: number;
   avgCpc: number;
   avgCvr: number;
+  totalMCv: number;
+  avgMCvr: number;
+  avgMCpa: number;
+  avgCpm: number;
   totalPerformanceBasedFee: number | null;
 };
 
@@ -165,6 +174,10 @@ async function fetchDailyMetrics({
       SUM(clicks) AS clicks,
       SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(clicks), 0)) AS cpc,
       SAFE_DIVIDE(SUM(cv), NULLIF(SUM(clicks), 0)) AS cvr,
+      SUM(COALESCE(m_cv, clicks)) AS mCv,
+      SAFE_DIVIDE(SUM(COALESCE(m_cv, clicks)), NULLIF(SUM(clicks), 0)) AS mCvr,
+      SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(COALESCE(m_cv, clicks)), 0)) AS mCpa,
+      SAFE_MULTIPLY(SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(impressions), 0)), 1000) AS cpm,
       ${performanceFeeExpression} AS performanceBasedFee
     FROM \`${tableName}\`
     WHERE aggregation_type = 'daily'
@@ -189,6 +202,10 @@ async function fetchDailyMetrics({
     clicks: toNumber(row.clicks),
     cpc: toNumber(row.cpc),
     cvr: toNumber(row.cvr),
+    mCv: toNumber(row.mCv ?? row.clicks),
+    mCvr: toNumber(row.mCvr),
+    mCpa: toNumber(row.mCpa),
+    cpm: toNumber(row.cpm),
     performanceBasedFee: toNumber(row.performanceBasedFee),
   }));
 }
@@ -208,7 +225,9 @@ export async function fetchPlatformDailyMetrics(params: Omit<DailyMetricParams, 
 export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
   let totalActualAdCost = 0;
   let totalCv = 0;
+  let totalImpressions = 0;
   let totalClicks = 0;
+  let totalMCv = 0;
   let totalPerformanceBasedFee = 0;
   let hasPerformanceFee = false;
 
@@ -219,8 +238,16 @@ export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
     if (row.cv) {
       totalCv += row.cv;
     }
+    if (row.impressions) {
+      totalImpressions += row.impressions;
+    }
     if (row.clicks) {
       totalClicks += row.clicks;
+    }
+    if (row.mCv !== null && row.mCv !== undefined) {
+      totalMCv += row.mCv;
+    } else if (row.clicks) {
+      totalMCv += row.clicks;
     }
     if (row.performanceBasedFee !== null && row.performanceBasedFee !== undefined) {
       hasPerformanceFee = true;
@@ -231,14 +258,22 @@ export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
   const avgCpa = totalCv > 0 ? totalActualAdCost / totalCv : 0;
   const avgCpc = totalClicks > 0 ? totalActualAdCost / totalClicks : 0;
   const avgCvr = totalClicks > 0 ? totalCv / totalClicks : 0;
+  const avgMcvR = totalClicks > 0 ? totalMCv / totalClicks : 0;
+  const avgMCpa = totalMCv > 0 ? totalActualAdCost / totalMCv : 0;
+  const avgCpm = totalImpressions > 0 ? (totalActualAdCost / totalImpressions) * 1000 : 0;
 
   return {
     totalActualAdCost,
     totalCv,
+    totalImpressions,
     avgCpa,
     totalClicks,
     avgCpc,
     avgCvr,
+    totalMCv,
+    avgMCvr: avgMcvR,
+    avgMCpa,
+    avgCpm,
     totalPerformanceBasedFee: hasPerformanceFee ? totalPerformanceBasedFee : null,
   };
 }
