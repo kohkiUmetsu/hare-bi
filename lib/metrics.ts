@@ -1,0 +1,244 @@
+import { runQuery } from "./bigquery";
+
+const DEFAULT_DATASET = "hare-local-project.hare_ad_data";
+const dataset = process.env.BIGQUERY_DATASET ?? DEFAULT_DATASET;
+
+export type ProjectOption = {
+  id: string;
+  name: string;
+};
+
+export type SectionOption = {
+  id: string;
+  label: string;
+  projectId: string | null;
+  projectName: string | null;
+};
+
+export type PlatformOption = {
+  id: string;
+  label: string;
+  sectionId: string | null;
+  sectionLabel: string | null;
+  projectId: string | null;
+  projectName: string | null;
+};
+
+export type DailyMetricRow = {
+  date: string;
+  actualAdCost: number | null;
+  cv: number | null;
+  cpa: number | null;
+  impressions: number | null;
+  clicks: number | null;
+  cpc: number | null;
+  cvr: number | null;
+  performanceBasedFee: number | null;
+};
+
+export type MetricSummary = {
+  totalActualAdCost: number;
+  totalCv: number;
+  avgCpa: number;
+  totalClicks: number;
+  avgCpc: number;
+  avgCvr: number;
+  totalPerformanceBasedFee: number | null;
+};
+
+export async function listProjects(): Promise<ProjectOption[]> {
+  const query = `
+    SELECT
+      id,
+      COALESCE(project_name, id) AS name
+    FROM \`${dataset}.project\`
+    ORDER BY name
+  `;
+
+  return runQuery<ProjectOption>(query);
+}
+
+export async function listSections(): Promise<SectionOption[]> {
+  const query = `
+    SELECT
+      s.id,
+      COALESCE(s.label, s.id) AS label,
+      s.project_id AS projectId,
+      p.project_name AS projectName
+    FROM \`${dataset}.section\` s
+    LEFT JOIN \`${dataset}.project\` p
+      ON p.id = s.project_id
+    ORDER BY label
+  `;
+
+  return runQuery<SectionOption>(query);
+}
+
+export async function listPlatforms(): Promise<PlatformOption[]> {
+  const query = `
+    SELECT
+      pl.id,
+      COALESCE(pl.platform_label, pl.id) AS label,
+      pl.section_id AS sectionId,
+      s.label AS sectionLabel,
+      s.project_id AS projectId,
+      p.project_name AS projectName
+    FROM \`${dataset}.platform\` pl
+    LEFT JOIN \`${dataset}.section\` s
+      ON s.id = pl.section_id
+    LEFT JOIN \`${dataset}.project\` p
+      ON p.id = s.project_id
+    ORDER BY label
+  `;
+
+  return runQuery<PlatformOption>(query);
+}
+
+type MetricLevel = "project" | "section" | "platform";
+
+type DailyMetricParams = {
+  level: MetricLevel;
+  entityId: string;
+  startDate: string;
+  endDate: string;
+};
+
+function toNumber(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return Number.isNaN(value) ? null : value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  if (typeof value === "object" && "value" in (value as Record<string, unknown>)) {
+    const raw = (value as { value: unknown }).value;
+    return toNumber(raw);
+  }
+
+  return null;
+}
+
+function buildPerformanceFeeExpression(level: MetricLevel) {
+  if (level === "platform") {
+    return "CAST(NULL AS FLOAT64)";
+  }
+
+  return "SUM(performance_based_fee)";
+}
+
+async function fetchDailyMetrics({
+  entityId,
+  endDate,
+  level,
+  startDate,
+}: DailyMetricParams): Promise<DailyMetricRow[]> {
+  const tableName =
+    level === "project"
+      ? `${dataset}.project_data`
+      : level === "section"
+      ? `${dataset}.section_data`
+      : `${dataset}.platform_data`;
+
+  const foreignKeyColumn =
+    level === "project"
+      ? "project_id"
+      : level === "section"
+      ? "section_id"
+      : "platform_id";
+
+  const performanceFeeExpression = buildPerformanceFeeExpression(level);
+
+  const query = `
+    SELECT
+      FORMAT_DATE('%Y-%m-%d', DATE(created_at)) AS date,
+      SUM(actual_ad_cost) AS actualAdCost,
+      SUM(cv) AS cv,
+      SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(cv), 0)) AS cpa,
+      SUM(impressions) AS impressions,
+      SUM(clicks) AS clicks,
+      SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(clicks), 0)) AS cpc,
+      SAFE_DIVIDE(SUM(cv), NULLIF(SUM(clicks), 0)) AS cvr,
+      ${performanceFeeExpression} AS performanceBasedFee
+    FROM \`${tableName}\`
+    WHERE aggregation_type = 'daily'
+      AND ${foreignKeyColumn} = @entityId
+      AND DATE(created_at) BETWEEN @startDate AND @endDate
+    GROUP BY date
+    ORDER BY date
+  `;
+
+  const rows = await runQuery<Record<string, unknown>>(query, {
+    entityId,
+    startDate,
+    endDate,
+  });
+
+  return rows.map((row) => ({
+    date: String(row.date),
+    actualAdCost: toNumber(row.actualAdCost),
+    cv: toNumber(row.cv),
+    cpa: toNumber(row.cpa),
+    impressions: toNumber(row.impressions),
+    clicks: toNumber(row.clicks),
+    cpc: toNumber(row.cpc),
+    cvr: toNumber(row.cvr),
+    performanceBasedFee: toNumber(row.performanceBasedFee),
+  }));
+}
+
+export async function fetchProjectDailyMetrics(params: Omit<DailyMetricParams, "level">) {
+  return fetchDailyMetrics({ ...params, level: "project" });
+}
+
+export async function fetchSectionDailyMetrics(params: Omit<DailyMetricParams, "level">) {
+  return fetchDailyMetrics({ ...params, level: "section" });
+}
+
+export async function fetchPlatformDailyMetrics(params: Omit<DailyMetricParams, "level">) {
+  return fetchDailyMetrics({ ...params, level: "platform" });
+}
+
+export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
+  let totalActualAdCost = 0;
+  let totalCv = 0;
+  let totalClicks = 0;
+  let totalPerformanceBasedFee = 0;
+  let hasPerformanceFee = false;
+
+  for (const row of rows) {
+    if (row.actualAdCost) {
+      totalActualAdCost += row.actualAdCost;
+    }
+    if (row.cv) {
+      totalCv += row.cv;
+    }
+    if (row.clicks) {
+      totalClicks += row.clicks;
+    }
+    if (row.performanceBasedFee !== null && row.performanceBasedFee !== undefined) {
+      hasPerformanceFee = true;
+      totalPerformanceBasedFee += row.performanceBasedFee;
+    }
+  }
+
+  const avgCpa = totalCv > 0 ? totalActualAdCost / totalCv : 0;
+  const avgCpc = totalClicks > 0 ? totalActualAdCost / totalClicks : 0;
+  const avgCvr = totalClicks > 0 ? totalCv / totalClicks : 0;
+
+  return {
+    totalActualAdCost,
+    totalCv,
+    avgCpa,
+    totalClicks,
+    avgCpc,
+    avgCvr,
+    totalPerformanceBasedFee: hasPerformanceFee ? totalPerformanceBasedFee : null,
+  };
+}
