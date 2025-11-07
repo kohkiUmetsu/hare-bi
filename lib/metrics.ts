@@ -37,6 +37,7 @@ export type DailyMetricRow = {
   mCvr: number | null;
   mCpa: number | null;
   cpm: number | null;
+  platformCv: number | null;
   performanceBasedFee: number | null;
 };
 
@@ -52,6 +53,7 @@ export type MetricSummary = {
   avgMCvr: number;
   avgMCpa: number;
   avgCpm: number;
+  totalPlatformCv: number;
   totalPerformanceBasedFee: number | null;
 };
 
@@ -178,6 +180,7 @@ async function fetchDailyMetrics({
       SAFE_DIVIDE(SUM(COALESCE(m_cv, clicks)), NULLIF(SUM(clicks), 0)) AS mCvr,
       SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(COALESCE(m_cv, clicks)), 0)) AS mCpa,
       SAFE_MULTIPLY(SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(impressions), 0)), 1000) AS cpm,
+      SUM(platform_cv) AS platformCv,
       ${performanceFeeExpression} AS performanceBasedFee
     FROM \`${tableName}\`
     WHERE aggregation_type = 'daily'
@@ -206,6 +209,7 @@ async function fetchDailyMetrics({
     mCvr: toNumber(row.mCvr),
     mCpa: toNumber(row.mCpa),
     cpm: toNumber(row.cpm),
+    platformCv: toNumber(row.platformCv),
     performanceBasedFee: toNumber(row.performanceBasedFee),
   }));
 }
@@ -228,6 +232,7 @@ export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
   let totalImpressions = 0;
   let totalClicks = 0;
   let totalMCv = 0;
+  let totalPlatformCv = 0;
   let totalPerformanceBasedFee = 0;
   let hasPerformanceFee = false;
 
@@ -248,6 +253,9 @@ export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
       totalMCv += row.mCv;
     } else if (row.clicks) {
       totalMCv += row.clicks;
+    }
+    if (row.platformCv !== null && row.platformCv !== undefined) {
+      totalPlatformCv += row.platformCv;
     }
     if (row.performanceBasedFee !== null && row.performanceBasedFee !== undefined) {
       hasPerformanceFee = true;
@@ -274,6 +282,7 @@ export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
     avgMCvr: avgMcvR,
     avgMCpa,
     avgCpm,
+    totalPlatformCv,
     totalPerformanceBasedFee: hasPerformanceFee ? totalPerformanceBasedFee : null,
   };
 }

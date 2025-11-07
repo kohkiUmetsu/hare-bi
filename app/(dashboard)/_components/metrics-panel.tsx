@@ -42,6 +42,7 @@ export function MetricsPanel({ metrics }: MetricsPanelProps) {
     = [
       { label: "平均CPC", value: summary.avgCpc, format: "decimal" },
       { label: "総mCV", value: summary.totalMCv },
+      { label: "媒体CV", value: summary.totalPlatformCv },
       { label: "平均mCVR", value: summary.avgMCvr, format: "percent" },
       { label: "平均mCPA", value: summary.avgMCpa, format: "decimal" },
     ];
@@ -101,6 +102,7 @@ export function MetricsPanel({ metrics }: MetricsPanelProps) {
               <th className="px-4 py-3">表示回数</th>
               <th className="px-4 py-3">クリック</th>
               <th className="px-4 py-3">CV</th>
+              <th className="px-4 py-3">媒体CV</th>
               <th className="px-4 py-3">CPA</th>
               <th className="px-4 py-3">CPC</th>
               <th className="px-4 py-3">CVR</th>
@@ -119,6 +121,7 @@ export function MetricsPanel({ metrics }: MetricsPanelProps) {
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.impressions)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.clicks)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cv)}</td>
+                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.platformCv)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpa, "decimal")}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpc, "decimal")}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cvr, "percent")}</td>

@@ -21,7 +21,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             href="/projects"
             className="block pb-4 text-center text-2xl font-semibold lg:pb-6 lg:text-left"
           >
-            Hare BI
+            Amateras
           </Link>
           <nav className="flex flex-wrap justify-center gap-2 lg:flex-col lg:items-stretch lg:justify-start">
             {navigation.map((item) => (

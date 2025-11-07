@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Hare BI",
+  title: "Amateras",
   description: "BigQueryのデータを可視化するダッシュボード",
 };
 
