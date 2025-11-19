@@ -1,6 +1,6 @@
 import 'server-only';
+import { cache } from 'react';
 import { redirect } from 'next/navigation';
-import { unstable_noStore as noStore } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 
 export type AppRole = 'admin' | 'agent';
@@ -12,8 +12,7 @@ export type SessionUser = {
   sectionId: string | null;
 };
 
-async function fetchCurrentUser(): Promise<SessionUser | null> {
-  noStore();
+const fetchCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -24,13 +23,11 @@ async function fetchCurrentUser(): Promise<SessionUser | null> {
     return null;
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from('profiles')
     .select('role, section_id')
     .eq('id', user.id)
     .maybeSingle();
-
-  console.log('[auth] profile fetch:', { userId: user.id, profile, profileError });
 
   if (!profile) {
     return null;
@@ -42,7 +39,7 @@ async function fetchCurrentUser(): Promise<SessionUser | null> {
     role: profile.role as AppRole,
     sectionId: profile.section_id ?? null,
   };
-}
+});
 
 export async function getCurrentUser() {
   return fetchCurrentUser();
