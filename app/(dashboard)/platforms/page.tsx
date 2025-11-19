@@ -6,6 +6,7 @@ import {
   type PlatformOption,
 } from "@/lib/metrics";
 import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
+import { requireAdmin } from "@/lib/auth-server";
 
 interface PlatformsPageProps {
   searchParams?: {
@@ -31,6 +32,7 @@ function resolvePlatformId(
 }
 
 export default async function PlatformsPage({ searchParams }: PlatformsPageProps) {
+  await requireAdmin();
   const { start: defaultStart, end: defaultEnd } = buildDefaultDateRange();
   const parsedStart = parseDateParam(searchParams?.startDate, defaultStart);
   const parsedEnd = parseDateParam(searchParams?.endDate, defaultEnd);

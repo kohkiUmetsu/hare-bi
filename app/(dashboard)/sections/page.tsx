@@ -6,6 +6,7 @@ import {
   type SectionOption,
 } from "@/lib/metrics";
 import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
+import { requireAuth } from "@/lib/auth-server";
 
 interface SectionsPageProps {
   searchParams?: {
@@ -31,6 +32,7 @@ function resolveSectionId(
 }
 
 export default async function SectionsPage({ searchParams }: SectionsPageProps) {
+  const user = await requireAuth();
   const { start: defaultStart, end: defaultEnd } = buildDefaultDateRange();
   const parsedStart = parseDateParam(searchParams?.startDate, defaultStart);
   const parsedEnd = parseDateParam(searchParams?.endDate, defaultEnd);
@@ -44,6 +46,13 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
 
   try {
     sections = await listSections();
+    if (user.role === "agent") {
+      if (!user.sectionId) {
+        throw new Error("代理店アカウントにセクションが割り当てられていません。");
+      }
+
+      sections = sections.filter((section) => section.id === user.sectionId);
+    }
     selectedSectionId = resolveSectionId(searchParams?.sectionId, sections);
     selectedSection = sections.find((section) => section.id === selectedSectionId) ?? null;
 

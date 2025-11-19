@@ -13,6 +13,8 @@ const percentFormatter = new Intl.NumberFormat("ja-JP", {
   maximumFractionDigits: 2,
 });
 
+const dateFormatter = new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium" });
+
 export type MetricFormat = "integer" | "decimal" | "percent";
 
 export function formatMetric(
@@ -31,4 +33,17 @@ export function formatMetric(
     default:
       return integerFormatter.format(value);
   }
+}
+
+export function formatDate(value: string | Date | null | undefined): string {
+  if (!value) {
+    return "—";
+  }
+
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return dateFormatter.format(date);
 }
