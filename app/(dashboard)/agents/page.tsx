@@ -3,6 +3,7 @@ import { listAgents } from '@/lib/agents';
 import { listSections } from '@/lib/metrics';
 import { formatDate } from '@/lib/format';
 import { CreateAgentForm } from './create-agent-form';
+import { DeleteAgentButton } from './delete-agent-button';
 
 export default async function AgentsPage() {
   await requireAdmin();
@@ -53,6 +54,7 @@ export default async function AgentsPage() {
                   <th className="px-3 py-2">メールアドレス</th>
                   <th className="px-3 py-2">セクション</th>
                   <th className="px-3 py-2">作成日</th>
+                  <th className="px-3 py-2 text-right">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200">
@@ -62,6 +64,9 @@ export default async function AgentsPage() {
                     <td className="px-3 py-2">{renderSection(agent.sectionId ?? null)}</td>
                     <td className="px-3 py-2 text-neutral-500">
                       {formatDate(agent.createdAt ?? null)}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <DeleteAgentButton agentId={agent.id} email={agent.email ?? '未設定'} />
                     </td>
                   </tr>
                 ))}

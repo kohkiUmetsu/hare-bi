@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth-server';
-import { upsertProfile } from '@/lib/agents';
+import { deleteAgentProfile, upsertProfile } from '@/lib/agents';
 import { getAdminSupabase } from '@/utils/supabase/admin';
 
 type UpdateUserParams = Parameters<
@@ -55,4 +55,22 @@ export async function createAgent(
   revalidatePath('/agents');
 
   return { success: '代理店アカウントを作成しました。' };
+}
+
+export async function deleteAgent(agentId: string) {
+  await requireAdmin();
+
+  if (!agentId) {
+    throw new Error('削除対象の代理店IDが不正です。');
+  }
+
+  const adminClient = getAdminSupabase();
+  const { error } = await adminClient.auth.admin.deleteUser(agentId);
+
+  if (error) {
+    throw new Error(error.message || 'Supabaseユーザーの削除に失敗しました。');
+  }
+
+  await deleteAgentProfile(agentId);
+  revalidatePath('/agents');
 }

@@ -24,3 +24,7 @@ export async function listAgents(): Promise<ProfileRow[]> {
     .where(eq(profilesTable.role, 'agent'))
     .orderBy(asc(profilesTable.email));
 }
+
+export async function deleteAgentProfile(agentId: string) {
+  await db.delete(profilesTable).where(eq(profilesTable.id, agentId));
+}
