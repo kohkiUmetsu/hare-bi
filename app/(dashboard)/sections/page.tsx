@@ -2,8 +2,10 @@ import { MetricsPanel } from "../_components/metrics-panel";
 import { SectionFilterForm } from "./section-filter-form";
 import {
   fetchSectionDailyMetrics,
+  fetchSectionPlatformBreakdown,
   listSections,
   type DailyMetricRow,
+  type MetricBreakdownRow,
   type SectionOption,
 } from "@/lib/metrics";
 import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
@@ -76,6 +78,7 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
   let selectedSection: SectionOption | null = null;
   let metrics: DailyMetricRow[] = [];
   let loadError: string | null = null;
+  let platformBreakdown: MetricBreakdownRow[] = [];
 
   try {
     sections = await listSections();
@@ -95,11 +98,20 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
     selectedSection = sectionsForProject.find((section) => section.id === selectedSectionId) ?? null;
 
     if (selectedSectionId) {
-      metrics = await fetchSectionDailyMetrics({
-        entityId: selectedSectionId,
-        startDate,
-        endDate,
-      });
+      const [metricsResult, breakdownResult] = await Promise.all([
+        fetchSectionDailyMetrics({
+          entityId: selectedSectionId,
+          startDate,
+          endDate,
+        }),
+        fetchSectionPlatformBreakdown({
+          sectionId: selectedSectionId,
+          startDate,
+          endDate,
+        }),
+      ]);
+      metrics = metricsResult;
+      platformBreakdown = breakdownResult;
     }
   } catch (error) {
     loadError = error instanceof Error ? error.message : "BigQueryからの取得に失敗しました。";
@@ -145,7 +157,24 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
               <span className="ml-1 font-medium text-neutral-900">{selectedSection.label}</span>
             </div>
           ) : null}
-          <MetricsPanel metrics={metrics} />
+          <MetricsPanel
+            metrics={metrics}
+            breakdowns={
+              platformBreakdown.length
+                ? {
+                    actualAdCost: platformBreakdown.map((item) => ({
+                      label: item.label,
+                      value: item.actualAdCost,
+                      currency: true,
+                    })),
+                    totalCv: platformBreakdown.map((item) => ({
+                      label: item.label,
+                      value: item.totalCv,
+                    })),
+                  }
+                : undefined
+            }
+          />
         </section>
       ) : null}
     </div>

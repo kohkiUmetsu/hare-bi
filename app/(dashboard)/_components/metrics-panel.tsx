@@ -1,11 +1,23 @@
 import { buildMetricSummary, type DailyMetricRow } from "@/lib/metrics";
 import { formatMetric } from "@/lib/format";
 
+type MetricBreakdownEntry = {
+  label: string;
+  value: number;
+  currency?: boolean;
+};
+
+type MetricBreakdownMap = {
+  actualAdCost?: MetricBreakdownEntry[];
+  totalCv?: MetricBreakdownEntry[];
+};
+
 interface MetricsPanelProps {
   metrics: DailyMetricRow[];
+  breakdowns?: MetricBreakdownMap;
 }
 
-export function MetricsPanel({ metrics }: MetricsPanelProps) {
+export function MetricsPanel({ metrics, breakdowns }: MetricsPanelProps) {
   if (!metrics.length) {
     return (
       <section className="rounded-lg border border-dashed border-neutral-300 bg-white px-4 py-6 text-sm text-neutral-500">
@@ -19,12 +31,24 @@ export function MetricsPanel({ metrics }: MetricsPanelProps) {
     (row) => row.performanceBasedFee !== null && row.performanceBasedFee !== undefined
   );
 
-  const topMetrics: Array<{ label: string; value: number | null; format?: "decimal" | "percent" }>
-    = [
-      { label: "実広告費", value: summary.totalActualAdCost },
-      { label: "総CV", value: summary.totalCv },
-      { label: "平均CPA", value: summary.avgCpa, format: "decimal" },
-    ];
+  const topMetrics: Array<{
+    key: keyof MetricBreakdownMap | 'avgCpa';
+    label: string;
+    value: number | null;
+    format?: 'decimal' | 'percent';
+    breakdownCurrency?: boolean;
+    prefix?: string;
+  }> = [
+    {
+      key: 'actualAdCost',
+      label: '実広告費',
+      value: summary.totalActualAdCost,
+      breakdownCurrency: true,
+      prefix: '¥',
+    },
+    { key: 'totalCv', label: '総CV', value: summary.totalCv },
+    { key: 'avgCpa', label: '平均CPA', value: summary.avgCpa, format: 'decimal' },
+  ];
 
   const middleMetrics: Array<{ label: string; value: number | null; format?: "decimal" | "percent" }>
     = [
@@ -50,15 +74,34 @@ export function MetricsPanel({ metrics }: MetricsPanelProps) {
   return (
     <div className="flex flex-col gap-6">
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {topMetrics.map(({ label, value, format }) => (
+        {topMetrics.map(({ key, label, value, format, prefix }) => (
           <article
             key={label}
             className="rounded-lg border border-neutral-200 bg-white px-4 py-3 shadow-sm"
           >
             <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
             <p className="mt-2 text-2xl font-semibold">
+              {prefix ?? ''}
               {formatMetric(value, format)}
             </p>
+            {key !== 'avgCpa' && breakdowns?.[key]?.length ? (
+              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-neutral-500">
+                {breakdowns[key]!
+                  .filter((item) => item.value > 0)
+                  .slice(0, 5)
+                  .map((item) => (
+                    <div
+                      key={`${key}-${item.label}`}
+                      className="rounded-full bg-neutral-50 px-2 py-1"
+                    >
+                      <span className="font-medium text-neutral-700">
+                        {item.currency ? `¥${formatMetric(item.value)}` : formatMetric(item.value)}
+                      </span>{' '}
+                      <span className="text-neutral-500">{item.label}</span>
+                    </div>
+                  ))}
+              </div>
+            ) : null}
           </article>
         ))}
       </section>

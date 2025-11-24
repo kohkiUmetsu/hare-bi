@@ -24,6 +24,13 @@ export type PlatformOption = {
   projectName: string | null;
 };
 
+export type MetricBreakdownRow = {
+  id: string;
+  label: string;
+  actualAdCost: number;
+  totalCv: number;
+};
+
 export type DailyMetricRow = {
   date: string;
   actualAdCost: number | null;
@@ -224,6 +231,63 @@ export async function fetchSectionDailyMetrics(params: Omit<DailyMetricParams, "
 
 export async function fetchPlatformDailyMetrics(params: Omit<DailyMetricParams, "level">) {
   return fetchDailyMetrics({ ...params, level: "platform" });
+}
+
+function mapBreakdownRows(rows: Array<Record<string, unknown>>): MetricBreakdownRow[] {
+  return rows.map((row) => ({
+    id: String(row.id),
+    label: String(row.label ?? row.id),
+    actualAdCost: toNumber(row.actualAdCost) ?? 0,
+    totalCv: toNumber(row.totalCv) ?? 0,
+  }));
+}
+
+export async function fetchProjectSectionBreakdown(params: {
+  projectId: string;
+  startDate: string;
+  endDate: string;
+}): Promise<MetricBreakdownRow[]> {
+  const query = `
+    SELECT
+      s.id AS id,
+      COALESCE(s.label, s.id) AS label,
+      SUM(sd.actual_ad_cost) AS actualAdCost,
+      SUM(sd.cv) AS totalCv
+    FROM \`${dataset}.section_data\` sd
+    LEFT JOIN \`${dataset}.section\` s
+      ON s.id = sd.section_id
+    WHERE s.project_id = @projectId
+      AND DATE(sd.created_at) BETWEEN @startDate AND @endDate
+    GROUP BY id, label
+    ORDER BY actualAdCost DESC
+  `;
+
+  const rows = await runQuery<Record<string, unknown>>(query, params);
+  return mapBreakdownRows(rows);
+}
+
+export async function fetchSectionPlatformBreakdown(params: {
+  sectionId: string;
+  startDate: string;
+  endDate: string;
+}): Promise<MetricBreakdownRow[]> {
+  const query = `
+    SELECT
+      p.id AS id,
+      COALESCE(p.platform_label, p.id) AS label,
+      SUM(pd.actual_ad_cost) AS actualAdCost,
+      SUM(pd.cv) AS totalCv
+    FROM \`${dataset}.platform_data\` pd
+    LEFT JOIN \`${dataset}.platform\` p
+      ON p.id = pd.platform_id
+    WHERE p.section_id = @sectionId
+      AND DATE(pd.created_at) BETWEEN @startDate AND @endDate
+    GROUP BY id, label
+    ORDER BY actualAdCost DESC
+  `;
+
+  const rows = await runQuery<Record<string, unknown>>(query, params);
+  return mapBreakdownRows(rows);
 }
 
 export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {

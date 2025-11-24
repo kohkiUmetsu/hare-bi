@@ -2,8 +2,10 @@ import { MetricsPanel } from "../_components/metrics-panel";
 import { ProjectFilterForm } from "./project-filter-form";
 import {
   fetchProjectDailyMetrics,
+  fetchProjectSectionBreakdown,
   listProjects,
   type DailyMetricRow,
+  type MetricBreakdownRow,
   type ProjectOption,
 } from "@/lib/metrics";
 import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
@@ -40,6 +42,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
   let selectedProjectName: string | null = null;
   let metrics: DailyMetricRow[] = [];
   let loadError: string | null = null;
+  let sectionBreakdown: MetricBreakdownRow[] = [];
 
   try {
     projects = await listProjects();
@@ -47,11 +50,16 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
     selectedProjectName = projects.find((project) => project.id === selectedProjectId)?.name ?? null;
 
     if (selectedProjectId) {
-      metrics = await fetchProjectDailyMetrics({
-        entityId: selectedProjectId,
-        startDate,
-        endDate,
-      });
+      const [metricsResult, breakdownResult] = await Promise.all([
+        fetchProjectDailyMetrics({
+          entityId: selectedProjectId,
+          startDate,
+          endDate,
+        }),
+        fetchProjectSectionBreakdown({ projectId: selectedProjectId, startDate, endDate }),
+      ]);
+      metrics = metricsResult;
+      sectionBreakdown = breakdownResult;
     }
   } catch (error) {
     loadError = error instanceof Error ? error.message : "BigQueryからの取得に失敗しました。";
@@ -94,7 +102,24 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
               選択中: <span className="font-medium text-neutral-900">{selectedProjectName}</span>
             </div>
           ) : null}
-          <MetricsPanel metrics={metrics} />
+          <MetricsPanel
+            metrics={metrics}
+            breakdowns={
+              sectionBreakdown.length
+                ? {
+                    actualAdCost: sectionBreakdown.map((item) => ({
+                      label: item.label,
+                      value: item.actualAdCost,
+                      currency: true,
+                    })),
+                    totalCv: sectionBreakdown.map((item) => ({
+                      label: item.label,
+                      value: item.totalCv,
+                    })),
+                  }
+                : undefined
+            }
+          />
         </section>
       ) : null}
     </div>
