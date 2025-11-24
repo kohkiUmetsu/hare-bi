@@ -1,4 +1,5 @@
 import { MetricsPanel } from "../_components/metrics-panel";
+import { SectionFilterForm } from "./section-filter-form";
 import {
   fetchSectionDailyMetrics,
   listSections,
@@ -7,28 +8,57 @@ import {
 } from "@/lib/metrics";
 import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
 import { requireAuth } from "@/lib/auth-server";
+import { toProjectKey } from "@/lib/filter-options";
 
 interface SectionsPageProps {
   searchParams?: {
+    projectId?: string;
     sectionId?: string;
     startDate?: string;
     endDate?: string;
   };
 }
 
+type ProjectFilterOption = {
+  id: string;
+  label: string;
+};
+
 function resolveSectionId(
   sectionId: string | undefined,
   sections: SectionOption[]
 ): string | null {
-  if (!sections.length) {
+  if (!sectionId || !sections.length) {
     return null;
   }
 
-  if (sectionId && sections.some((section) => section.id === sectionId)) {
-    return sectionId;
+  return sections.some((section) => section.id === sectionId) ? sectionId : null;
+}
+
+function resolveProjectId(
+  projectId: string | undefined,
+  projectOptions: ProjectFilterOption[]
+): string | null {
+  if (!projectId || !projectOptions.length) {
+    return null;
   }
 
-  return sections[0]?.id ?? null;
+  return projectOptions.some((option) => option.id === projectId) ? projectId : null;
+}
+
+function buildProjectOptions(sections: SectionOption[]): ProjectFilterOption[] {
+  const projectMap = new Map<string, string>();
+
+  sections.forEach((section) => {
+    const key = toProjectKey(section.projectId);
+    if (!projectMap.has(key)) {
+      projectMap.set(key, section.projectName ?? "プロジェクト未設定");
+    }
+  });
+
+  return Array.from(projectMap.entries())
+    .map(([id, label]) => ({ id, label }))
+    .sort((a, b) => a.label.localeCompare(b.label, "ja"));
 }
 
 export default async function SectionsPage({ searchParams }: SectionsPageProps) {
@@ -39,6 +69,9 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
   const { start: startDate, end: endDate } = normalizeDateRange(parsedStart, parsedEnd);
 
   let sections: SectionOption[] = [];
+  let projectOptions: ProjectFilterOption[] = [];
+  let selectedProjectId: string | null = null;
+  let sectionsForProject: SectionOption[] = [];
   let selectedSectionId: string | null = null;
   let selectedSection: SectionOption | null = null;
   let metrics: DailyMetricRow[] = [];
@@ -53,8 +86,13 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
 
       sections = sections.filter((section) => section.id === user.sectionId);
     }
-    selectedSectionId = resolveSectionId(searchParams?.sectionId, sections);
-    selectedSection = sections.find((section) => section.id === selectedSectionId) ?? null;
+    projectOptions = buildProjectOptions(sections);
+    selectedProjectId = resolveProjectId(searchParams?.projectId, projectOptions);
+    sectionsForProject = selectedProjectId
+      ? sections.filter((section) => toProjectKey(section.projectId) === selectedProjectId)
+      : [];
+    selectedSectionId = resolveSectionId(searchParams?.sectionId, sectionsForProject);
+    selectedSection = sectionsForProject.find((section) => section.id === selectedSectionId) ?? null;
 
     if (selectedSectionId) {
       metrics = await fetchSectionDailyMetrics({
@@ -76,66 +114,14 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
         </p>
       </header>
 
-      <section className="rounded-lg border border-neutral-200 bg-white px-4 py-4 shadow-sm">
-        <form className="flex flex-wrap items-end gap-4" method="get">
-          <div className="flex w-full flex-col gap-1 sm:w-72">
-            <label htmlFor="sectionId" className="text-xs font-medium text-neutral-600">
-              セクション
-            </label>
-            <select
-              id="sectionId"
-              name="sectionId"
-              defaultValue={selectedSectionId ?? ""}
-              className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none"
-              disabled={!sections.length}
-            >
-              {sections.length === 0 ? (
-                <option value="">セクションがありません</option>
-              ) : (
-                sections.map((section) => (
-                  <option key={section.id} value={section.id}>
-                    {section.label}
-                    {section.projectName ? `（${section.projectName}）` : ""}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor="startDate" className="text-xs font-medium text-neutral-600">
-              開始日
-            </label>
-            <input
-              id="startDate"
-              name="startDate"
-              type="date"
-              defaultValue={startDate}
-              className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor="endDate" className="text-xs font-medium text-neutral-600">
-              終了日
-            </label>
-            <input
-              id="endDate"
-              name="endDate"
-              type="date"
-              defaultValue={endDate}
-              className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="h-10 w-full rounded-md bg-neutral-900 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-neutral-800 sm:w-auto"
-          >
-            表示
-          </button>
-        </form>
-      </section>
+      <SectionFilterForm
+        projectOptions={projectOptions}
+        sections={sections}
+        selectedProjectId={selectedProjectId}
+        selectedSectionId={selectedSectionId}
+        startDate={startDate}
+        endDate={endDate}
+      />
 
       {loadError ? (
         <section className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -145,7 +131,9 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
 
       {!loadError && !selectedSectionId ? (
         <section className="rounded-lg border border-dashed border-neutral-300 bg-white px-4 py-6 text-sm text-neutral-500">
-          セクションが存在しません。BigQueryにデータを追加してから再度アクセスしてください。
+          {projectOptions.length === 0
+            ? 'セクションが存在しません。BigQueryにデータを追加してから再度アクセスしてください。'
+            : 'プロジェクトとセクションを選択し、「表示」を押してください。'}
         </section>
       ) : null}
 
@@ -155,9 +143,6 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
             <div className="text-sm text-neutral-500">
               選択中:
               <span className="ml-1 font-medium text-neutral-900">{selectedSection.label}</span>
-              {selectedSection.projectName ? (
-                <span className="ml-2 text-neutral-500">（{selectedSection.projectName}）</span>
-              ) : null}
             </div>
           ) : null}
           <MetricsPanel metrics={metrics} />

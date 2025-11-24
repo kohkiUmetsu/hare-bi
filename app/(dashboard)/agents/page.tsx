@@ -22,7 +22,7 @@ export default async function AgentsPage() {
       return sectionId;
     }
 
-    return section.projectName ? `${section.label}（${section.projectName}）` : section.label;
+    return section.label;
   }
 
   return (

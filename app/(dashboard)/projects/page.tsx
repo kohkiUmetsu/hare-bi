@@ -1,4 +1,5 @@
 import { MetricsPanel } from "../_components/metrics-panel";
+import { ProjectFilterForm } from "./project-filter-form";
 import {
   fetchProjectDailyMetrics,
   listProjects,
@@ -20,15 +21,11 @@ function resolveProjectId(
   projectId: string | undefined,
   projects: ProjectOption[]
 ): string | null {
-  if (!projects.length) {
+  if (!projectId || !projects.length) {
     return null;
   }
 
-  if (projectId && projects.some((project) => project.id === projectId)) {
-    return projectId;
-  }
-
-  return projects[0]?.id ?? null;
+  return projects.some((project) => project.id === projectId) ? projectId : null;
 }
 
 export default async function ProjectsPage({ searchParams }: ProjectsPageProps) {
@@ -69,65 +66,12 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         </p>
       </header>
 
-      <section className="rounded-lg border border-neutral-200 bg-white px-4 py-4 shadow-sm">
-        <form className="flex flex-wrap items-end gap-4" method="get">
-          <div className="flex w-full flex-col gap-1 sm:w-64">
-            <label htmlFor="projectId" className="text-xs font-medium text-neutral-600">
-              プロジェクト
-            </label>
-            <select
-              id="projectId"
-              name="projectId"
-              defaultValue={selectedProjectId ?? ""}
-              className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none"
-              disabled={!projects.length}
-            >
-              {projects.length === 0 ? (
-                <option value="">プロジェクトがありません</option>
-              ) : (
-                projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor="startDate" className="text-xs font-medium text-neutral-600">
-              開始日
-            </label>
-            <input
-              id="startDate"
-              name="startDate"
-              type="date"
-              defaultValue={startDate}
-              className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor="endDate" className="text-xs font-medium text-neutral-600">
-              終了日
-            </label>
-            <input
-              id="endDate"
-              name="endDate"
-              type="date"
-              defaultValue={endDate}
-              className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="h-10 w-full rounded-md bg-neutral-900 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-neutral-800 sm:w-auto"
-          >
-            表示
-          </button>
-        </form>
-      </section>
+      <ProjectFilterForm
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        startDate={startDate}
+        endDate={endDate}
+      />
 
       {loadError ? (
         <section className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -137,7 +81,9 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 
       {!loadError && !selectedProjectId ? (
         <section className="rounded-lg border border-dashed border-neutral-300 bg-white px-4 py-6 text-sm text-neutral-500">
-          プロジェクトが存在しません。BigQueryにデータを追加してから再度アクセスしてください。
+          {projects.length === 0
+            ? 'プロジェクトが存在しません。BigQueryにデータを追加してから再度アクセスしてください。'
+            : 'プロジェクトを選択し、「表示」を押してください。'}
         </section>
       ) : null}
 

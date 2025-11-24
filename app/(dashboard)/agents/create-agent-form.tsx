@@ -74,7 +74,7 @@ export function CreateAgentForm({ sections }: CreateAgentFormProps) {
           {sections.map((section) => (
             <option key={section.id} value={section.id}>
               {section.label}
-              {section.projectName ? `（${section.projectName}）` : ''}
+              {section.projectName ? ` ${section.projectName}` : ''}
             </option>
           ))}
         </select>
