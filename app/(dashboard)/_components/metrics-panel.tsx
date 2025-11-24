@@ -1,5 +1,6 @@
-import { buildMetricSummary, type DailyMetricRow } from "@/lib/metrics";
-import { formatMetric } from "@/lib/format";
+import dynamic from 'next/dynamic';
+import { buildMetricSummary, type DailyMetricRow } from '@/lib/metrics';
+import { formatMetric } from '@/lib/format';
 
 type MetricBreakdownEntry = {
   label: string;
@@ -11,6 +12,10 @@ type MetricBreakdownMap = {
   actualAdCost?: MetricBreakdownEntry[];
   totalCv?: MetricBreakdownEntry[];
 };
+
+const MetricsTrendCharts = dynamic(() => import('./metrics-trend-charts'), {
+  ssr: false,
+});
 
 interface MetricsPanelProps {
   metrics: DailyMetricRow[];
@@ -135,6 +140,10 @@ export function MetricsPanel({ metrics, breakdowns }: MetricsPanelProps) {
           ))}
         </div>
       </details>
+
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <MetricsTrendCharts metrics={metrics} />
+      </section>
 
       <section className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
         <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
