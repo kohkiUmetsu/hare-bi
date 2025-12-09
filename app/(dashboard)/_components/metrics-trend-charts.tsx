@@ -39,19 +39,19 @@ function formatShortLabel(value: string) {
 }
 
 export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps) {
-  const maxCv = metrics.reduce((acc, row) => Math.max(acc, row.cv ?? 0), 0);
+  const maxMspCv = metrics.reduce((acc, row) => Math.max(acc, row.mspCv ?? 0), 0);
   const maxCpa = metrics.reduce((acc, row) => Math.max(acc, row.cpa ?? 0), 0);
-  const cvScaleFactor = (() => {
-    if (maxCv === 0) {
+  const mspCvScaleFactor = (() => {
+    if (maxMspCv === 0) {
       return 1;
     }
 
-    const base = maxCpa > 0 ? maxCv / maxCpa : maxCv;
+    const base = maxCpa > 0 ? maxMspCv / maxCpa : maxMspCv;
     return Math.max(1, Math.ceil(base * 2));
   })();
   const chartMetrics = metrics.map((row) => ({
     ...row,
-    cvScaled: row.cv ? row.cv / cvScaleFactor : 0,
+    mspCvScaled: row.mspCv ? row.mspCv / mspCvScaleFactor : 0,
   }));
 
   if (!metrics.length) {
@@ -93,7 +93,7 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tickFormatter={(value) => formatInteger((value ?? 0) * cvScaleFactor)}
+                tickFormatter={(value) => formatInteger((value ?? 0) * mspCvScaleFactor)}
                 tick={{ fontSize: 10 }}
                 width={60}
               />
@@ -101,7 +101,7 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
                 formatter={(value: number, name: string) =>
                   name === 'CPA'
                     ? `${formatInteger(value as number)}`
-                    : `${formatInteger((value as number) * cvScaleFactor)}`
+                    : `${formatInteger((value as number) * mspCvScaleFactor)}`
                 }
                 labelFormatter={(value) => formatDate(value)}
               />
@@ -117,8 +117,8 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
               />
               <Bar
                 yAxisId="right"
-                dataKey="cvScaled"
-                name="CV件数"
+                dataKey="mspCvScaled"
+                name="MSP CV件数"
                 fill="#2563eb"
                 radius={[4, 4, 0, 0]}
                 barSize={16}

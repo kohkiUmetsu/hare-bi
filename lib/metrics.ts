@@ -28,13 +28,15 @@ export type MetricBreakdownRow = {
   id: string;
   label: string;
   actualAdCost: number;
-  totalCv: number;
+  totalMspCv: number;
+  totalActualCv: number;
 };
 
 export type DailyMetricRow = {
   date: string;
   actualAdCost: number | null;
-  cv: number | null;
+  mspCv: number | null;
+  actualCv: number | null;
   cpa: number | null;
   impressions: number | null;
   clicks: number | null;
@@ -50,12 +52,15 @@ export type DailyMetricRow = {
 
 export type MetricSummary = {
   totalActualAdCost: number;
-  totalCv: number;
+  totalMspCv: number;
+  totalActualCv: number;
   totalImpressions: number;
-  avgCpa: number;
+  avgMspCpa: number;
+  avgActualCpa: number;
   totalClicks: number;
   avgCpc: number;
-  avgCvr: number;
+  avgMspCvr: number;
+  avgActualCvr: number;
   totalMCv: number;
   avgMCvr: number;
   avgMCpa: number;
@@ -177,12 +182,13 @@ async function fetchDailyMetrics({
     SELECT
       FORMAT_DATE('%Y-%m-%d', DATE(created_at)) AS date,
       SUM(actual_ad_cost) AS actualAdCost,
-      SUM(cv) AS cv,
-      SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(cv), 0)) AS cpa,
+      SUM(msp_cv) AS mspCv,
+      SUM(actual_cv) AS actualCv,
+      SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(msp_cv), 0)) AS cpa,
       SUM(impressions) AS impressions,
       SUM(clicks) AS clicks,
       SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(clicks), 0)) AS cpc,
-      SAFE_DIVIDE(SUM(cv), NULLIF(SUM(clicks), 0)) AS cvr,
+      SAFE_DIVIDE(SUM(msp_cv), NULLIF(SUM(clicks), 0)) AS cvr,
       SUM(COALESCE(m_cv, clicks)) AS mCv,
       SAFE_DIVIDE(SUM(COALESCE(m_cv, clicks)), NULLIF(SUM(clicks), 0)) AS mCvr,
       SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(COALESCE(m_cv, clicks)), 0)) AS mCpa,
@@ -206,7 +212,8 @@ async function fetchDailyMetrics({
   return rows.map((row) => ({
     date: String(row.date),
     actualAdCost: toNumber(row.actualAdCost),
-    cv: toNumber(row.cv),
+    mspCv: toNumber(row.mspCv),
+    actualCv: toNumber(row.actualCv),
     cpa: toNumber(row.cpa),
     impressions: toNumber(row.impressions),
     clicks: toNumber(row.clicks),
@@ -238,7 +245,8 @@ function mapBreakdownRows(rows: Array<Record<string, unknown>>): MetricBreakdown
     id: String(row.id),
     label: String(row.label ?? row.id),
     actualAdCost: toNumber(row.actualAdCost) ?? 0,
-    totalCv: toNumber(row.totalCv) ?? 0,
+    totalMspCv: toNumber(row.totalMspCv) ?? 0,
+    totalActualCv: toNumber(row.totalActualCv) ?? 0,
   }));
 }
 
@@ -252,11 +260,13 @@ export async function fetchProjectSectionBreakdown(params: {
       s.id AS id,
       COALESCE(s.label, s.id) AS label,
       SUM(sd.actual_ad_cost) AS actualAdCost,
-      SUM(sd.cv) AS totalCv
+      SUM(sd.msp_cv) AS totalMspCv,
+      SUM(sd.actual_cv) AS totalActualCv
     FROM \`${dataset}.section_data\` sd
     LEFT JOIN \`${dataset}.section\` s
       ON s.id = sd.section_id
     WHERE s.project_id = @projectId
+      AND sd.aggregation_type = 'daily'
       AND DATE(sd.created_at) BETWEEN @startDate AND @endDate
     GROUP BY id, label
     ORDER BY actualAdCost DESC
@@ -276,11 +286,13 @@ export async function fetchSectionPlatformBreakdown(params: {
       p.id AS id,
       COALESCE(p.platform_label, p.id) AS label,
       SUM(pd.actual_ad_cost) AS actualAdCost,
-      SUM(pd.cv) AS totalCv
+      SUM(pd.msp_cv) AS totalMspCv,
+      SUM(pd.actual_cv) AS totalActualCv
     FROM \`${dataset}.platform_data\` pd
     LEFT JOIN \`${dataset}.platform\` p
       ON p.id = pd.platform_id
     WHERE p.section_id = @sectionId
+      AND pd.aggregation_type = 'daily'
       AND DATE(pd.created_at) BETWEEN @startDate AND @endDate
     GROUP BY id, label
     ORDER BY actualAdCost DESC
@@ -292,7 +304,8 @@ export async function fetchSectionPlatformBreakdown(params: {
 
 export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
   let totalActualAdCost = 0;
-  let totalCv = 0;
+  let totalMspCv = 0;
+  let totalActualCv = 0;
   let totalImpressions = 0;
   let totalClicks = 0;
   let totalMCv = 0;
@@ -304,8 +317,11 @@ export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
     if (row.actualAdCost) {
       totalActualAdCost += row.actualAdCost;
     }
-    if (row.cv) {
-      totalCv += row.cv;
+    if (row.mspCv) {
+      totalMspCv += row.mspCv;
+    }
+    if (row.actualCv) {
+      totalActualCv += row.actualCv;
     }
     if (row.impressions) {
       totalImpressions += row.impressions;
@@ -327,21 +343,26 @@ export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
     }
   }
 
-  const avgCpa = totalCv > 0 ? totalActualAdCost / totalCv : 0;
+  const avgMspCpa = totalMspCv > 0 ? totalActualAdCost / totalMspCv : 0;
+  const avgActualCpa = totalActualCv > 0 ? totalActualAdCost / totalActualCv : 0;
   const avgCpc = totalClicks > 0 ? totalActualAdCost / totalClicks : 0;
-  const avgCvr = totalClicks > 0 ? totalCv / totalClicks : 0;
+  const avgMspCvr = totalClicks > 0 ? totalMspCv / totalClicks : 0;
+  const avgActualCvr = totalClicks > 0 ? totalActualCv / totalClicks : 0;
   const avgMcvR = totalClicks > 0 ? totalMCv / totalClicks : 0;
   const avgMCpa = totalMCv > 0 ? totalActualAdCost / totalMCv : 0;
   const avgCpm = totalImpressions > 0 ? (totalActualAdCost / totalImpressions) * 1000 : 0;
 
   return {
     totalActualAdCost,
-    totalCv,
+    totalMspCv,
+    totalActualCv,
     totalImpressions,
-    avgCpa,
+    avgMspCpa,
+    avgActualCpa,
     totalClicks,
     avgCpc,
-    avgCvr,
+    avgMspCvr,
+    avgActualCvr,
     totalMCv,
     avgMCvr: avgMcvR,
     avgMCpa,

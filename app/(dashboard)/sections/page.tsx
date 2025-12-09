@@ -167,9 +167,13 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
                       value: item.actualAdCost,
                       currency: true,
                     })),
-                    totalCv: platformBreakdown.map((item) => ({
+                    mspCv: platformBreakdown.map((item) => ({
                       label: item.label,
-                      value: item.totalCv,
+                      value: item.totalMspCv,
+                    })),
+                    actualCv: platformBreakdown.map((item) => ({
+                      label: item.label,
+                      value: item.totalActualCv,
                     })),
                   }
                 : undefined

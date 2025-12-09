@@ -10,7 +10,8 @@ type MetricBreakdownEntry = {
 
 type MetricBreakdownMap = {
   actualAdCost?: MetricBreakdownEntry[];
-  totalCv?: MetricBreakdownEntry[];
+  mspCv?: MetricBreakdownEntry[];
+  actualCv?: MetricBreakdownEntry[];
 };
 
 const MetricsTrendCharts = dynamic(() => import('./metrics-trend-charts'), {
@@ -37,7 +38,7 @@ export function MetricsPanel({ metrics, breakdowns }: MetricsPanelProps) {
   );
 
   const topMetrics: Array<{
-    key: keyof MetricBreakdownMap | 'avgCpa';
+    key: keyof MetricBreakdownMap;
     label: string;
     value: number | null;
     format?: 'decimal' | 'percent';
@@ -51,16 +52,19 @@ export function MetricsPanel({ metrics, breakdowns }: MetricsPanelProps) {
       breakdownCurrency: true,
       prefix: '¥',
     },
-    { key: 'totalCv', label: '総CV', value: summary.totalCv },
-    { key: 'avgCpa', label: '平均CPA', value: summary.avgCpa, format: 'decimal' },
+    { key: 'mspCv', label: 'MSP総CV', value: summary.totalMspCv },
+    { key: 'actualCv', label: '総実CV', value: summary.totalActualCv },
   ];
 
-  const middleMetrics: Array<{ label: string; value: number | null; format?: "decimal" | "percent" }>
+  const middleMetrics: Array<{ label: string; value: number | null; format?: 'decimal' | 'percent' }>
     = [
-      { label: "総クリック数", value: summary.totalClicks },
-      { label: "総インプレッション", value: summary.totalImpressions },
-      { label: "平均CVR", value: summary.avgCvr, format: "percent" },
-      { label: "CPM", value: summary.avgCpm, format: "decimal" },
+      { label: '平均MSP CPA', value: summary.avgMspCpa, format: 'decimal' },
+      { label: '平均実CPA', value: summary.avgActualCpa, format: 'decimal' },
+      { label: '総クリック数', value: summary.totalClicks },
+      { label: '総インプレッション', value: summary.totalImpressions },
+      { label: '平均MSP CVR', value: summary.avgMspCvr, format: 'percent' },
+      { label: '平均実CVR', value: summary.avgActualCvr, format: 'percent' },
+      { label: 'CPM', value: summary.avgCpm, format: 'decimal' },
     ];
 
   if (showPerformanceFee) {
@@ -89,7 +93,7 @@ export function MetricsPanel({ metrics, breakdowns }: MetricsPanelProps) {
               {prefix ?? ''}
               {formatMetric(value, format)}
             </p>
-            {key !== 'avgCpa' && breakdowns?.[key]?.length ? (
+            {breakdowns?.[key]?.length ? (
               <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-neutral-500">
                 {breakdowns[key]!
                   .filter((item) => item.value > 0)
@@ -153,7 +157,8 @@ export function MetricsPanel({ metrics, breakdowns }: MetricsPanelProps) {
               <th className="px-4 py-3">広告費</th>
               <th className="px-4 py-3">表示回数</th>
               <th className="px-4 py-3">クリック</th>
-              <th className="px-4 py-3">CV</th>
+              <th className="px-4 py-3">MSP CV</th>
+              <th className="px-4 py-3">実CV</th>
               <th className="px-4 py-3">媒体CV</th>
               <th className="px-4 py-3">CPA</th>
               <th className="px-4 py-3">CPC</th>
@@ -172,7 +177,8 @@ export function MetricsPanel({ metrics, breakdowns }: MetricsPanelProps) {
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualAdCost)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.impressions)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.clicks)}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cv)}</td>
+                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mspCv)}</td>
+                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualCv)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.platformCv)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpa, "decimal")}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpc, "decimal")}</td>

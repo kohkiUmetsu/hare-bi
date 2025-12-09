@@ -112,9 +112,13 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
                       value: item.actualAdCost,
                       currency: true,
                     })),
-                    totalCv: sectionBreakdown.map((item) => ({
+                    mspCv: sectionBreakdown.map((item) => ({
                       label: item.label,
-                      value: item.totalCv,
+                      value: item.totalMspCv,
+                    })),
+                    actualCv: sectionBreakdown.map((item) => ({
+                      label: item.label,
+                      value: item.totalActualCv,
                     })),
                   }
                 : undefined
