@@ -21,9 +21,10 @@ const MetricsTrendCharts = dynamic(() => import('./metrics-trend-charts'), {
 interface MetricsPanelProps {
   metrics: DailyMetricRow[];
   breakdowns?: MetricBreakdownMap;
+  hideTable?: boolean;
 }
 
-export function MetricsPanel({ metrics, breakdowns }: MetricsPanelProps) {
+export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelProps) {
   if (!metrics.length) {
     return (
       <section className="rounded-lg border border-dashed border-neutral-300 bg-white px-4 py-6 text-sm text-neutral-500">
@@ -149,54 +150,56 @@ export function MetricsPanel({ metrics, breakdowns }: MetricsPanelProps) {
         <MetricsTrendCharts metrics={metrics} />
       </section>
 
-      <section className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
-          <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-wider text-neutral-500 sm:text-xs">
-            <tr>
-              <th className="px-4 py-3">日付</th>
-              <th className="px-4 py-3">広告費</th>
-              <th className="px-4 py-3">表示回数</th>
-              <th className="px-4 py-3">クリック</th>
-              <th className="px-4 py-3">MSP CV</th>
-              <th className="px-4 py-3">実CV</th>
-              <th className="px-4 py-3">媒体CV</th>
-              <th className="px-4 py-3">CPA</th>
-              <th className="px-4 py-3">CPC</th>
-              <th className="px-4 py-3">CVR</th>
-              <th className="px-4 py-3">mCV</th>
-              <th className="px-4 py-3">mCVR</th>
-              <th className="px-4 py-3">mCPA</th>
-              <th className="px-4 py-3">CPM</th>
-              {showPerformanceFee ? <th className="px-4 py-3">成果報酬費</th> : null}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-100">
-            {metrics.map((row) => (
-              <tr key={row.date} className="whitespace-nowrap">
-                <td className="px-4 py-3 text-neutral-700">{row.date}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualAdCost)}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.impressions)}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.clicks)}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mspCv)}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualCv)}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.platformCv)}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpa, "decimal")}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpc, "decimal")}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cvr, "percent")}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mCv)}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mCvr, "percent")}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mCpa, "decimal")}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpm, "decimal")}</td>
-                {showPerformanceFee ? (
-                  <td className="px-4 py-3 text-neutral-900">
-                    {formatMetric(row.performanceBasedFee)}
-                  </td>
-                ) : null}
+      {hideTable ? null : (
+        <section className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
+          <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
+            <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-wider text-neutral-500 sm:text-xs">
+              <tr>
+                <th className="px-4 py-3">日付</th>
+                <th className="px-4 py-3">広告費</th>
+                <th className="px-4 py-3">表示回数</th>
+                <th className="px-4 py-3">クリック</th>
+                <th className="px-4 py-3">MSP CV</th>
+                <th className="px-4 py-3">実CV</th>
+                <th className="px-4 py-3">媒体CV</th>
+                <th className="px-4 py-3">CPA</th>
+                <th className="px-4 py-3">CPC</th>
+                <th className="px-4 py-3">CVR</th>
+                <th className="px-4 py-3">mCV</th>
+                <th className="px-4 py-3">mCVR</th>
+                <th className="px-4 py-3">mCPA</th>
+                <th className="px-4 py-3">CPM</th>
+                {showPerformanceFee ? <th className="px-4 py-3">成果報酬費</th> : null}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {metrics.map((row) => (
+                <tr key={row.date} className="whitespace-nowrap">
+                  <td className="px-4 py-3 text-neutral-700">{row.date}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualAdCost)}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.impressions)}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.clicks)}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mspCv)}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualCv)}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.platformCv)}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpa, "decimal")}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpc, "decimal")}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cvr, "percent")}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mCv)}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mCvr, "percent")}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mCpa, "decimal")}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpm, "decimal")}</td>
+                  {showPerformanceFee ? (
+                    <td className="px-4 py-3 text-neutral-900">
+                      {formatMetric(row.performanceBasedFee)}
+                    </td>
+                  ) : null}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
     </div>
   );
 }

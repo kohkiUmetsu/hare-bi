@@ -1,7 +1,7 @@
 import { runQuery } from "./bigquery";
+import { getBigQueryDataset } from "./bigquery-config";
 
-const DEFAULT_DATASET = "hare-local-project.hare_ad_data";
-const dataset = process.env.BIGQUERY_DATASET ?? DEFAULT_DATASET;
+const dataset = getBigQueryDataset();
 
 export type ProjectOption = {
   id: string;

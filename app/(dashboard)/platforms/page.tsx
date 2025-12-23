@@ -1,5 +1,6 @@
 import { MetricsPanel } from "../_components/metrics-panel";
 import { PlatformFilterForm } from "./platform-filter-form";
+import { PlatformMetricsTable } from "./platform-metrics-table";
 import {
   fetchPlatformDailyMetrics,
   listPlatforms,
@@ -200,7 +201,10 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
               ) : null}
             </div>
           ) : null}
-          <MetricsPanel metrics={metrics} />
+          <MetricsPanel metrics={metrics} hideTable />
+          {selectedPlatform ? (
+            <PlatformMetricsTable metrics={metrics} platform={selectedPlatform} />
+          ) : null}
         </section>
       ) : null}
     </div>
