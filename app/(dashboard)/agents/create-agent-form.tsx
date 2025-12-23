@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useServerActionState } from '@/components/use-server-action-state';
+import { useFormStatus } from 'react-dom';
 import type { SectionOption } from '@/lib/metrics';
 import { createAgent, type CreateAgentState } from './actions';
 
@@ -25,10 +26,13 @@ interface CreateAgentFormProps {
 }
 
 export function CreateAgentForm({ sections }: CreateAgentFormProps) {
-  const [state, formAction] = useFormState(createAgent, initialState);
+  const [state, formAction] = useServerActionState(createAgent, initialState);
+  const handleAction = async (formData: FormData) => {
+    await formAction(formData);
+  };
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={handleAction} className="space-y-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="email" className="text-sm font-medium text-neutral-700">
           メールアドレス

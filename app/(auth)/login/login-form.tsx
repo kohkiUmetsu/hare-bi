@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useServerActionState } from '@/components/use-server-action-state';
+import { useFormStatus } from 'react-dom';
 import { login, type LoginResult } from './actions';
 
 const initialState: LoginResult = {};
@@ -20,10 +21,13 @@ function SubmitButton() {
 }
 
 export function LoginForm() {
-  const [state, formAction] = useFormState(login, initialState);
+  const [state, formAction] = useServerActionState(login, initialState);
+  const handleAction = async (formData: FormData) => {
+    await formAction(formData);
+  };
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={handleAction} className="space-y-6">
       <div className="space-y-2">
         <label htmlFor="email" className="text-sm font-medium text-neutral-700">
           メールアドレス

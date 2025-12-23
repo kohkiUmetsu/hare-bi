@@ -15,6 +15,27 @@
       "when": 1763521430999,
       "tag": "0001_needy_firestar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765826350194,
+      "tag": "0002_bouncy_wraith",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1765913672897,
+      "tag": "0003_breezy_mephisto",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1766427098105,
+      "tag": "0004_fearless_stranger",
+      "breakpoints": true
     }
   ]
 }

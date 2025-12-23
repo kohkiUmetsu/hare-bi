@@ -9,6 +9,8 @@ const adminNavigation = [
   { href: "/sections", label: "セクション" },
   { href: "/platforms", label: "プラットフォーム" },
   { href: "/agents", label: "代理店管理" },
+  { href: "/data-updates", label: "データ更新設定" },
+  { href: "/settings", label: "設定" },
 ];
 
 const agentNavigation = [{ href: "/sections", label: "セクション" }];

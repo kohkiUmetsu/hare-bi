@@ -14,7 +14,13 @@ if (!connectionString) {
   throw new Error('SUPABASE_DB_URI is not set.');
 }
 
-const client = global.__dbClient ?? postgres(connectionString, { max: 1 });
+const client = global.__dbClient ?? postgres(connectionString, {
+  max: 10,
+  connection: {
+    application_name: 'hare-bi',
+  },
+  prepare: false,
+});
 
 if (process.env.NODE_ENV !== 'production') {
   global.__dbClient = client;

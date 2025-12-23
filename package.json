@@ -9,7 +9,9 @@
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "create-admin": "node scripts/create-admin.mjs"
+    "create-admin": "node scripts/create-admin.mjs",
+    "backup-data": "node scripts/backup-data.mjs",
+    "migrate-data": "node scripts/migrate-data.mjs"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^8.1.1",
