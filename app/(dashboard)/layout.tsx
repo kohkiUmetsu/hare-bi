@@ -1,9 +1,15 @@
 import type { ReactNode } from "react";
 import { requireAuth } from "@/lib/auth-server";
-import { NavLink } from "./_components/nav-link";
+import { NavLink, type NavLinkIcon } from "./_components/nav-link";
 import { Header } from "./_components/header";
 
-const adminNavigation = [
+type NavigationItem = {
+  href: string;
+  label: string;
+  icon: NavLinkIcon;
+};
+
+const adminNavigation: NavigationItem[] = [
   { href: "/projects", label: "Projects", icon: "FolderKanban" },
   { href: "/sections", label: "Sections", icon: "Layout" },
   { href: "/platforms", label: "Platforms", icon: "Monitor" },
@@ -11,8 +17,9 @@ const adminNavigation = [
   { href: "/data-updates", label: "Updates", icon: "RefreshCw" },
   { href: "/settings", label: "Settings", icon: "Settings" },
 ];
-
-const agentNavigation = [{ href: "/sections", label: "Sections", icon: "Layout" }];
+const agentNavigation: NavigationItem[] = [
+  { href: "/sections", label: "Sections", icon: "Layout" },
+];
 
 interface DashboardLayoutProps {
   children: ReactNode;

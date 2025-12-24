@@ -14,10 +14,12 @@ const iconMap = {
   Settings,
 };
 
+export type NavLinkIcon = keyof typeof iconMap;
+
 interface NavLinkProps {
   href: string;
   children: ReactNode;
-  icon?: keyof typeof iconMap;
+  icon?: NavLinkIcon;
 }
 
 export function NavLink({ href, children, icon }: NavLinkProps) {
