@@ -19,6 +19,12 @@
 
 @layer base {
   :root {
+    /* Custom color scheme */
+    --primary-color: #EFEDED;
+    --accent-color: #45CCFF;
+    --accent-color-alt: #0B7CC2;
+    --white: #FFFFFF;
+
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;

@@ -41,6 +41,7 @@ export type DailyMetricRow = {
   impressions: number | null;
   clicks: number | null;
   cpc: number | null;
+  ctr: number | null;
   cvr: number | null;
   mCv: number | null;
   mCvr: number | null;
@@ -59,6 +60,7 @@ export type MetricSummary = {
   avgActualCpa: number;
   totalClicks: number;
   avgCpc: number;
+  avgCtr: number;
   avgMspCvr: number;
   avgActualCvr: number;
   totalMCv: number;
@@ -188,6 +190,7 @@ async function fetchDailyMetrics({
       SUM(impressions) AS impressions,
       SUM(clicks) AS clicks,
       SAFE_DIVIDE(SUM(actual_ad_cost), NULLIF(SUM(clicks), 0)) AS cpc,
+      SAFE_DIVIDE(SUM(clicks), NULLIF(SUM(impressions), 0)) AS ctr,
       SAFE_DIVIDE(SUM(msp_cv), NULLIF(SUM(clicks), 0)) AS cvr,
       SUM(COALESCE(m_cv, clicks)) AS mCv,
       SAFE_DIVIDE(SUM(COALESCE(m_cv, clicks)), NULLIF(SUM(clicks), 0)) AS mCvr,
@@ -218,6 +221,7 @@ async function fetchDailyMetrics({
     impressions: toNumber(row.impressions),
     clicks: toNumber(row.clicks),
     cpc: toNumber(row.cpc),
+    ctr: toNumber(row.ctr),
     cvr: toNumber(row.cvr),
     mCv: toNumber(row.mCv ?? row.clicks),
     mCvr: toNumber(row.mCvr),
@@ -346,6 +350,7 @@ export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
   const avgMspCpa = totalMspCv > 0 ? totalActualAdCost / totalMspCv : 0;
   const avgActualCpa = totalActualCv > 0 ? totalActualAdCost / totalActualCv : 0;
   const avgCpc = totalClicks > 0 ? totalActualAdCost / totalClicks : 0;
+  const avgCtr = totalImpressions > 0 ? totalClicks / totalImpressions : 0;
   const avgMspCvr = totalClicks > 0 ? totalMspCv / totalClicks : 0;
   const avgActualCvr = totalClicks > 0 ? totalActualCv / totalClicks : 0;
   const avgMcvR = totalClicks > 0 ? totalMCv / totalClicks : 0;
@@ -361,6 +366,7 @@ export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
     avgActualCpa,
     totalClicks,
     avgCpc,
+    avgCtr,
     avgMspCvr,
     avgActualCvr,
     totalMCv,

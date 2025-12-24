@@ -69,7 +69,7 @@ export function SectionFilterForm({
   const sectionDisabled = sectionsForProject.length === 0;
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white px-4 py-4 shadow-sm">
+    <section className="rounded-lg bg-white px-4 py-4 shadow-sm">
       <form className="flex flex-wrap items-end gap-4" method="get">
         <div className="flex w-full flex-col gap-1 sm:w-72">
           <label htmlFor="projectId" className="text-xs font-medium text-neutral-600">
@@ -80,7 +80,7 @@ export function SectionFilterForm({
             name="projectId"
             value={projectId}
             onChange={(event) => setProjectId(event.target.value)}
-            className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none"
+            className="h-10 rounded-md bg-neutral-50 px-3 text-sm text-neutral-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"
             disabled={projectDisabled}
           >
             {projectDisabled ? (
@@ -104,7 +104,7 @@ export function SectionFilterForm({
             name="sectionId"
             value={sectionId}
             onChange={(event) => setSectionId(event.target.value)}
-            className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none"
+            className="h-10 rounded-md bg-neutral-50 px-3 text-sm text-neutral-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"
             disabled={sectionDisabled}
           >
             {sectionDisabled ? (
@@ -123,7 +123,7 @@ export function SectionFilterForm({
 
         <button
           type="submit"
-          className="h-10 w-full rounded-md bg-neutral-900 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-neutral-800 sm:w-auto"
+          className="h-10 w-full rounded-md bg-[var(--accent-color)] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:opacity-90 sm:w-auto"
           disabled={projectDisabled || sectionDisabled}
         >
           表示

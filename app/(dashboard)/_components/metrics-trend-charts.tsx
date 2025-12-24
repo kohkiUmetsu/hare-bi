@@ -110,7 +110,7 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
                 type="monotone"
                 dataKey="cpa"
                 name="CPA"
-                stroke="#f97316"
+                stroke="var(--accent-color)"
                 strokeWidth={2}
                 dot={false}
                 isAnimationActive={false}
@@ -119,7 +119,7 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
                 yAxisId="right"
                 dataKey="mspCvScaled"
                 name="MSP CV件数"
-                fill="#2563eb"
+                fill="var(--accent-color-alt)"
                 radius={[4, 4, 0, 0]}
                 barSize={16}
                 isAnimationActive={false}
@@ -136,8 +136,8 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
             <AreaChart data={metrics} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="adCostGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
+                  <stop offset="5%" stopColor="var(--accent-color)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--accent-color)" stopOpacity={0.1} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -160,7 +160,7 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
                 type="monotone"
                 dataKey="actualAdCost"
                 name="実広告費"
-                stroke="#0d9488"
+                stroke="var(--accent-color)"
                 fill="url(#adCostGradient)"
                 strokeWidth={2}
                 isAnimationActive={false}

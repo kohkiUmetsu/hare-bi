@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic';
 import { buildMetricSummary, type DailyMetricRow } from '@/lib/metrics';
 import { formatMetric } from '@/lib/format';
+import { MetricMiniChart } from './metric-mini-chart';
 
 type MetricBreakdownEntry = {
   label: string;
@@ -27,7 +28,7 @@ interface MetricsPanelProps {
 export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelProps) {
   if (!metrics.length) {
     return (
-      <section className="rounded-lg border border-dashed border-neutral-300 bg-white px-4 py-6 text-sm text-neutral-500">
+      <section className="rounded-lg bg-white px-4 py-6 text-sm text-neutral-500 shadow-sm">
         表示するデータがありません。条件を変更して再度お試しください。
       </section>
     );
@@ -39,7 +40,7 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
   );
 
   const topMetrics: Array<{
-    key: keyof MetricBreakdownMap;
+    key?: keyof MetricBreakdownMap;
     label: string;
     value: number | null;
     format?: 'decimal' | 'percent';
@@ -53,105 +54,141 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
       breakdownCurrency: true,
       prefix: '¥',
     },
-    { key: 'mspCv', label: 'MSP総CV', value: summary.totalMspCv },
     { key: 'actualCv', label: '総実CV', value: summary.totalActualCv },
+    { label: '平均MSP CPA', value: summary.avgMspCpa, format: 'decimal' },
   ];
 
-  const middleMetrics: Array<{ label: string; value: number | null; format?: 'decimal' | 'percent' }>
+  const middleMetricsTop: Array<{ label: string; value: number | null; format?: 'decimal' | 'percent'; dataKey: string }>
     = [
-      { label: '平均MSP CPA', value: summary.avgMspCpa, format: 'decimal' },
-      { label: '平均実CPA', value: summary.avgActualCpa, format: 'decimal' },
-      { label: '総クリック数', value: summary.totalClicks },
-      { label: '総インプレッション', value: summary.totalImpressions },
-      { label: '平均MSP CVR', value: summary.avgMspCvr, format: 'percent' },
-      { label: '平均実CVR', value: summary.avgActualCvr, format: 'percent' },
-      { label: 'CPM', value: summary.avgCpm, format: 'decimal' },
+      { label: '総インプレッション', value: summary.totalImpressions, dataKey: 'impressions' },
+      { label: '総クリック数', value: summary.totalClicks, dataKey: 'clicks' },
+      { label: '総mCV', value: summary.totalMCv, dataKey: 'mCv' },
+      { label: '平均CPC', value: summary.avgCpc, format: 'decimal', dataKey: 'cpc' },
     ];
 
-  if (showPerformanceFee) {
-    middleMetrics.push({ label: "総成果報酬費", value: summary.totalPerformanceBasedFee ?? null });
-  }
-
-  const secondaryItems: Array<{ label: string; value: number | null; format?: "decimal" | "percent" }>
+  const middleMetricsBottom: Array<{ label: string; value: number | null; format?: 'decimal' | 'percent'; dataKey: string }>
     = [
-      { label: "平均CPC", value: summary.avgCpc, format: "decimal" },
-      { label: "総mCV", value: summary.totalMCv },
-      { label: "媒体CV", value: summary.totalPlatformCv },
-      { label: "平均mCVR", value: summary.avgMCvr, format: "percent" },
-      { label: "平均mCPA", value: summary.avgMCpa, format: "decimal" },
+      { label: 'CPM', value: summary.avgCpm, format: 'decimal', dataKey: 'cpm' },
+      { label: 'CTR', value: summary.avgCtr, format: 'percent', dataKey: 'ctr' },
+      { label: '平均mCVR', value: summary.avgMCvr, format: 'percent', dataKey: 'mCvr' },
+      { label: 'CVR', value: summary.avgMspCvr, format: 'percent', dataKey: 'cvr' },
     ];
 
   return (
     <div className="flex flex-col gap-6">
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {topMetrics.map(({ key, label, value, format, prefix }) => (
-          <article
-            key={label}
-            className="rounded-lg border border-neutral-200 bg-white px-4 py-3 shadow-sm"
-          >
-            <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
-            <p className="mt-2 text-2xl font-semibold">
-              {prefix ?? ''}
-              {formatMetric(value, format)}
-            </p>
-            {breakdowns?.[key]?.length ? (
-              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-neutral-500">
-                {breakdowns[key]!
-                  .filter((item) => item.value > 0)
-                  .slice(0, 5)
-                  .map((item) => (
-                    <div
-                      key={`${key}-${item.label}`}
-                      className="rounded-full bg-neutral-50 px-2 py-1"
-                    >
-                      <span className="font-medium text-neutral-700">
-                        {item.currency ? `¥${formatMetric(item.value)}` : formatMetric(item.value)}
-                      </span>{' '}
-                      <span className="text-neutral-500">{item.label}</span>
-                    </div>
-                  ))}
-              </div>
-            ) : null}
-          </article>
-        ))}
-      </section>
+        {topMetrics.map(({ key, label, value, format, prefix }, index) => {
+          const chartData = metrics.map((row) => ({
+            date: row.date,
+            value: index === 0 ? row.actualAdCost : index === 1 ? row.actualCv : row.cpa,
+          }));
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {middleMetrics.map(({ label, value, format }) => (
-          <article
-            key={label}
-            className="rounded-lg border border-neutral-200 bg-white px-4 py-3 shadow-sm"
-          >
-            <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
-            <p className="mt-2 text-2xl font-semibold">
-              {formatMetric(value, format)}
-            </p>
-          </article>
-        ))}
-      </section>
-
-      <details className="rounded-lg border border-neutral-200 bg-white px-4 py-3 shadow-sm">
-        <summary className="cursor-pointer text-sm font-semibold text-neutral-700">
-          詳細指標（CPC / m指標）
-        </summary>
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {secondaryItems.map(({ label, value, format }) => (
-            <div key={label} className="rounded-md border border-neutral-100 bg-neutral-50 px-3 py-3">
-              <h3 className="text-xs font-medium text-neutral-500">{label}</h3>
-              <p className="mt-2 text-xl font-semibold text-neutral-900">
+          return (
+            <article
+              key={label}
+              className="rounded-lg bg-white px-4 py-3 shadow-sm"
+            >
+              <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
+              <p className="mt-2 text-2xl font-semibold">
+                {prefix ?? ''}
                 {formatMetric(value, format)}
               </p>
-            </div>
-          ))}
-        </div>
-      </details>
+
+              {/* Mini chart */}
+              <MetricMiniChart
+                data={chartData}
+                variant={index === 0 ? 'area' : 'line'}
+                index={index}
+              />
+
+              {key && breakdowns?.[key]?.length ? (
+                <div className="mt-3 overflow-hidden rounded border border-neutral-200">
+                  <table className="w-full text-xs">
+                    <thead className="bg-neutral-50">
+                      <tr>
+                        <th className="px-2 py-1.5 text-left font-medium text-neutral-600">項目</th>
+                        <th className="px-2 py-1.5 text-right font-medium text-neutral-600">値</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100 bg-white">
+                      {breakdowns[key]!
+                        .filter((item) => item.value > 0)
+                        .slice(0, 5)
+                        .map((item) => (
+                          <tr key={`${key}-${item.label}`} className="hover:bg-neutral-50">
+                            <td className="px-2 py-1.5 text-neutral-700">{item.label}</td>
+                            <td className="px-2 py-1.5 text-right font-medium text-neutral-900">
+                              {item.currency ? `¥${formatMetric(item.value)}` : formatMetric(item.value)}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
+      </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <MetricsTrendCharts metrics={metrics} />
       </section>
 
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {middleMetricsTop.map(({ label, value, format, dataKey }) => {
+          const chartData = metrics.map((row) => ({
+            date: row.date,
+            value: row[dataKey as keyof DailyMetricRow] as number | null,
+          }));
+
+          return (
+            <article
+              key={label}
+              className="rounded-lg bg-white px-4 py-3 shadow-sm"
+            >
+              <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
+              <p className="mt-2 text-2xl font-semibold">
+                {formatMetric(value, format)}
+              </p>
+              <MetricMiniChart
+                data={chartData}
+                variant="line"
+                index={label.charCodeAt(0)}
+              />
+            </article>
+          );
+        })}
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {middleMetricsBottom.map(({ label, value, format, dataKey }) => {
+          const chartData = metrics.map((row) => ({
+            date: row.date,
+            value: row[dataKey as keyof DailyMetricRow] as number | null,
+          }));
+
+          return (
+            <article
+              key={label}
+              className="rounded-lg bg-white px-4 py-3 shadow-sm"
+            >
+              <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
+              <p className="mt-2 text-2xl font-semibold">
+                {formatMetric(value, format)}
+              </p>
+              <MetricMiniChart
+                data={chartData}
+                variant="line"
+                index={label.charCodeAt(0)}
+              />
+            </article>
+          );
+        })}
+      </section>
+
       {hideTable ? null : (
-        <section className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
+        <section className="overflow-x-auto rounded-lg bg-white shadow-sm">
           <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
             <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-wider text-neutral-500 sm:text-xs">
               <tr>
