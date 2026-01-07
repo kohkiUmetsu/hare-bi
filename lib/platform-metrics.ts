@@ -2,6 +2,7 @@ import { runQuery } from "./bigquery";
 import { getBigQueryDataset } from "./bigquery-config";
 
 const dataset = getBigQueryDataset();
+const actualCvEditsTable = `${dataset}.platform_actual_cv_edits`;
 
 type NumberLike = number | string | { value: unknown } | null | undefined;
 
@@ -30,6 +31,108 @@ type PlatformActualCvSnapshot = {
   rowCount: number;
   actualCv: number;
 };
+
+type PlatformActualCvEditor = {
+  id: string;
+  email: string | null;
+};
+
+type PlatformActualCvEditParams = {
+  platformId: string;
+  sectionId: string | null;
+  projectId: string | null;
+  targetDate: string;
+  previousActualCv: number;
+  newActualCv: number;
+  delta: number;
+  editor?: PlatformActualCvEditor | null;
+};
+
+type PlatformActualCvEditRow = {
+  date: string;
+};
+
+async function recordPlatformActualCvEdit({
+  platformId,
+  sectionId,
+  projectId,
+  targetDate,
+  previousActualCv,
+  newActualCv,
+  delta,
+  editor,
+}: PlatformActualCvEditParams): Promise<void> {
+  const insertQuery = `
+    INSERT INTO \`${actualCvEditsTable}\` (
+      edit_id,
+      platform_id,
+      section_id,
+      project_id,
+      target_date,
+      previous_actual_cv,
+      new_actual_cv,
+      delta,
+      edited_at,
+      editor_id,
+      editor_email
+    )
+    VALUES (
+      GENERATE_UUID(),
+      @platformId,
+      @sectionId,
+      @projectId,
+      DATE(@targetDate),
+      @previousActualCv,
+      @newActualCv,
+      @delta,
+      CURRENT_TIMESTAMP(),
+      @editorId,
+      @editorEmail
+    )
+  `;
+
+  await runQuery(insertQuery, {
+    platformId,
+    sectionId,
+    projectId,
+    targetDate,
+    previousActualCv,
+    newActualCv,
+    delta,
+    editorId: editor?.id ?? null,
+    editorEmail: editor?.email ?? null,
+  });
+}
+
+export async function fetchPlatformActualCvEditMap(params: {
+  platformId: string;
+  startDate: string;
+  endDate: string;
+}): Promise<Record<string, boolean>> {
+  const query = `
+    SELECT
+      FORMAT_DATE('%Y-%m-%d', target_date) AS date
+    FROM \`${actualCvEditsTable}\`
+    WHERE platform_id = @platformId
+      AND target_date BETWEEN DATE(@startDate) AND DATE(@endDate)
+    GROUP BY date
+  `;
+
+  try {
+    const rows = await runQuery<PlatformActualCvEditRow>(query, params);
+    return rows.reduce<Record<string, boolean>>((acc, row) => {
+      if (row.date) {
+        acc[row.date] = true;
+      }
+      return acc;
+    }, {});
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Not found: Table")) {
+      return {};
+    }
+    throw error;
+  }
+}
 
 async function fetchPlatformActualCvSnapshot(
   platformId: string,
@@ -62,6 +165,7 @@ export type UpdatePlatformActualCvParams = {
   projectId: string | null;
   targetDate: string;
   newActualCv: number;
+  editor?: PlatformActualCvEditor | null;
 };
 
 export type UpdatePlatformActualCvResult = {
@@ -76,6 +180,7 @@ export async function updatePlatformActualCvValue({
   sectionId,
   targetDate,
   newActualCv,
+  editor,
 }: UpdatePlatformActualCvParams): Promise<UpdatePlatformActualCvResult> {
   const snapshot = await fetchPlatformActualCvSnapshot(platformId, targetDate);
 
@@ -140,10 +245,20 @@ export async function updatePlatformActualCvValue({
     });
   }
 
+  await recordPlatformActualCvEdit({
+    platformId,
+    sectionId,
+    projectId,
+    targetDate,
+    previousActualCv,
+    newActualCv: clampedActualCv,
+    delta,
+    editor,
+  });
+
   return {
     previousActualCv,
     newActualCv: clampedActualCv,
     delta,
   };
 }
-

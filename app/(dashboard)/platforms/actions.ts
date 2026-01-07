@@ -66,7 +66,7 @@ export async function updatePlatformActualCv(
   _prevState: PlatformMetricsActionState,
   formData: FormData
 ): Promise<PlatformMetricsActionState> {
-  await requireAdmin();
+  const user = await requireAdmin();
   const requestId = String(formData.get('request_id') ?? '').trim() || undefined;
 
   try {
@@ -84,6 +84,7 @@ export async function updatePlatformActualCv(
       projectId,
       targetDate,
       newActualCv,
+      editor: { id: user.id, email: user.email },
     });
 
     await Promise.all([
@@ -104,4 +105,3 @@ export async function updatePlatformActualCv(
     return failure(message, requestId);
   }
 }
-

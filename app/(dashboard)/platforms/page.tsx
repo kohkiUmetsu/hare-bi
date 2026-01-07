@@ -7,6 +7,7 @@ import {
   type DailyMetricRow,
   type PlatformOption,
 } from "@/lib/metrics";
+import { fetchPlatformActualCvEditMap } from "@/lib/platform-metrics";
 import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
 import { requireAdmin } from "@/lib/auth-server";
 import { toProjectKey } from "@/lib/filter-options";
@@ -124,6 +125,7 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
   let selectedPlatformId: string | null = null;
   let selectedPlatform: PlatformOption | null = null;
   let metrics: DailyMetricRow[] = [];
+  let actualCvEdits: Record<string, boolean> = {};
   let loadError: string | null = null;
   let selectedPlatformRelation = "";
 
@@ -145,6 +147,15 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
         startDate,
         endDate,
       });
+      try {
+        actualCvEdits = await fetchPlatformActualCvEditMap({
+          platformId: selectedPlatformId,
+          startDate,
+          endDate,
+        });
+      } catch (error) {
+        actualCvEdits = {};
+      }
     }
 
     if (selectedPlatform) {
@@ -203,7 +214,11 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
           ) : null}
           <MetricsPanel metrics={metrics} hideTable />
           {selectedPlatform ? (
-            <PlatformMetricsTable metrics={metrics} platform={selectedPlatform} />
+            <PlatformMetricsTable
+              metrics={metrics}
+              platform={selectedPlatform}
+              actualCvEdits={actualCvEdits}
+            />
           ) : null}
         </section>
       ) : null}

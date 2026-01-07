@@ -10,6 +10,7 @@ import { updatePlatformActualCv, type PlatformMetricsActionState } from './actio
 interface PlatformMetricsTableProps {
   metrics: DailyMetricRow[];
   platform: PlatformOption;
+  actualCvEdits?: Record<string, boolean>;
 }
 
 const initialState: PlatformMetricsActionState = { status: null };
@@ -22,7 +23,11 @@ function generateRequestId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function PlatformMetricsTable({ metrics, platform }: PlatformMetricsTableProps) {
+export function PlatformMetricsTable({
+  metrics,
+  platform,
+  actualCvEdits,
+}: PlatformMetricsTableProps) {
   const [state, formAction] = useServerActionState<PlatformMetricsActionState>(
     updatePlatformActualCv,
     initialState
@@ -171,7 +176,13 @@ export function PlatformMetricsTable({ metrics, platform }: PlatformMetricsTable
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.impressions)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.clicks)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mspCv)}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualCv)}</td>
+                <td
+                  className={`px-4 py-3 ${
+                    actualCvEdits?.[row.date] ? 'text-amber-600' : 'text-neutral-900'
+                  }`}
+                >
+                  {formatMetric(row.actualCv)}
+                </td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.platformCv)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpa, 'decimal')}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpc, 'decimal')}</td>
