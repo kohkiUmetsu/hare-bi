@@ -153,7 +153,7 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
           startDate,
           endDate,
         });
-      } catch (error) {
+      } catch {
         actualCvEdits = {};
       }
     }
