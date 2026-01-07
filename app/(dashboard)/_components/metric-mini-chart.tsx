@@ -40,7 +40,7 @@ export function MetricMiniChart({ data, variant, index }: MetricMiniChartProps) 
               formatter={(value: number) => value.toLocaleString()}
             />
             <Area
-              type="monotone"
+              type="linear"
               dataKey="value"
               stroke="var(--accent-color)"
               fill={`url(#gradient-${index})`}
@@ -71,7 +71,7 @@ export function MetricMiniChart({ data, variant, index }: MetricMiniChartProps) 
               formatter={(value: number) => value.toLocaleString()}
             />
             <Line
-              type="monotone"
+              type="linear"
               dataKey="value"
               stroke="var(--accent-color)"
               strokeWidth={1.5}

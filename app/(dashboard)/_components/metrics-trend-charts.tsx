@@ -107,7 +107,7 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
               />
               <Line
                 yAxisId="left"
-                type="monotone"
+                type="linear"
                 dataKey="cpa"
                 name="CPA"
                 stroke="var(--accent-color)"
@@ -157,7 +157,7 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
                 labelFormatter={(value) => formatDate(value)}
               />
               <Area
-                type="monotone"
+                type="linear"
                 dataKey="actualAdCost"
                 name="実広告費"
                 stroke="var(--accent-color)"
