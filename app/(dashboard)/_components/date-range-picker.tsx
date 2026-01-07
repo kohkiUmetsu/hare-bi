@@ -150,7 +150,7 @@ export function DateRangePicker({ startDate, endDate }: DateRangePickerProps) {
           {currentLabel}
         </Button>
         {open ? (
-          <div className="absolute z-10 mt-2 rounded-md border border-neutral-200 bg-white p-2 shadow-lg">
+          <div className="absolute z-10 mt-2 border border-neutral-200 bg-white p-2 shadow-lg">
             <Calendar
               mode="range"
               numberOfMonths={2}

@@ -24,7 +24,7 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
   };
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+    <section className="border border-neutral-200 bg-white p-6 shadow-sm">
       <header>
         <h2 className="text-2xl font-semibold">プロジェクト設定</h2>
         <p className="text-sm text-neutral-500">
@@ -43,7 +43,7 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
             name="project_name"
             value={project.project_name}
             readOnly
-            className="mt-1 w-full rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600"
+            className="mt-1 w-full border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600"
           />
         </div>
 
@@ -91,7 +91,7 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
               step="1"
               defaultValue={project.performance_unit_price ?? undefined}
               required
-              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
               placeholder="例: 10000"
             />
           </div>
@@ -105,7 +105,7 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
           {settings.msp_advertisers.length > 0 && (
             <div>
               <label className="text-sm font-medium text-neutral-700">MSP広告主</label>
-              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-neutral-200 p-3">
+              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto border border-neutral-200 p-3">
                 {settings.msp_advertisers.map((advertiser) => (
                   <label key={advertiser.id} className="flex items-start gap-2">
                     <input
@@ -129,7 +129,7 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
           {settings.meta_accounts.length > 0 && (
             <div>
               <label className="text-sm font-medium text-neutral-700">Metaアカウント</label>
-              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-neutral-200 p-3">
+              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto border border-neutral-200 p-3">
                 {settings.meta_accounts.map((account) => (
                   <label key={account.account_id} className="flex items-start gap-2">
                     <input
@@ -153,7 +153,7 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
           {settings.tiktok_accounts.length > 0 && (
             <div>
               <label className="text-sm font-medium text-neutral-700">TikTokアカウント</label>
-              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-neutral-200 p-3">
+              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto border border-neutral-200 p-3">
                 {settings.tiktok_accounts.map((account) => (
                   <label key={account.advertiser_id} className="flex items-start gap-2">
                     <input
@@ -177,7 +177,7 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
           {settings.google_ads_accounts.length > 0 && (
             <div>
               <label className="text-sm font-medium text-neutral-700">Google広告アカウント</label>
-              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-neutral-200 p-3">
+              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto border border-neutral-200 p-3">
                 {settings.google_ads_accounts.map((account) => (
                   <label key={account.customer_id} className="flex items-start gap-2">
                     <input
@@ -201,7 +201,7 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
           {settings.line_accounts.length > 0 && (
             <div>
               <label className="text-sm font-medium text-neutral-700">LINEアカウント</label>
-              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-neutral-200 p-3">
+              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto border border-neutral-200 p-3">
                 {settings.line_accounts.map((account) => (
                   <label key={account.account_id} className="flex items-start gap-2">
                     <input
@@ -226,7 +226,7 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
             settings.tiktok_accounts.length === 0 &&
             settings.google_ads_accounts.length === 0 &&
             settings.line_accounts.length === 0 && (
-              <p className="rounded-md border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">
+              <p className="border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">
                 まだ媒体アカウントが登録されていません。
               </p>
             )}

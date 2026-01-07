@@ -45,13 +45,13 @@ export default async function SettingsPage() {
         <div className="flex flex-wrap gap-3">
           <Link
             href="/settings/projects/new"
-            className="inline-flex items-center rounded-md border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm transition hover:bg-neutral-50"
+            className="inline-flex items-center border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm transition hover:bg-neutral-50"
           >
             プロジェクトを追加
           </Link>
           <Link
             href="/settings/accounts"
-            className="inline-flex items-center rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"
+            className="inline-flex items-center bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"
           >
             媒体アカウントを登録
           </Link>

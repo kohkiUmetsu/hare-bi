@@ -21,7 +21,10 @@
   :root {
     /* Custom color scheme */
     --primary-color: #EFEDED;
-    --accent-color: #45CCFF;
+    --accent-color-600: #003B53;
+    --accent-color-500: #004A67;
+    --accent-color-400: #00658D;
+    --accent-color: var(--accent-color-600);
     --accent-color-alt: #0B7CC2;
     --white: #FFFFFF;
 

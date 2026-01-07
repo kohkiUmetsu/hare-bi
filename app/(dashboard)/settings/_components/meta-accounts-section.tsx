@@ -25,14 +25,14 @@ export function MetaAccountsSection({ accounts }: MetaAccountsSectionProps) {
   };
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+    <section className="border border-neutral-200 bg-white p-6 shadow-sm">
       <header>
         <h2 className="text-2xl font-semibold">Meta広告アカウント</h2>
         <p className="text-sm text-neutral-500">Meta広告アカウントを登録します。プロジェクトとの紐付けはプロジェクト作成時に設定します。</p>
       </header>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="overflow-auto rounded-md border border-neutral-200">
+        <div className="overflow-auto border border-neutral-200">
           <table className="min-w-full divide-y divide-neutral-200 text-sm">
             <thead className="bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
               <tr>
@@ -66,7 +66,7 @@ export function MetaAccountsSection({ accounts }: MetaAccountsSectionProps) {
           </table>
         </div>
 
-        <form action={handleAction} className="flex flex-col gap-4 rounded-md border border-neutral-200 p-4">
+        <form action={handleAction} className="flex flex-col gap-4 border border-neutral-200 p-4">
           <div>
             <label className="text-sm font-medium text-neutral-700" htmlFor="meta_account_id">
               アカウントID
@@ -75,7 +75,7 @@ export function MetaAccountsSection({ accounts }: MetaAccountsSectionProps) {
               id="meta_account_id"
               name="account_id"
               required
-              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm font-mono"
+              className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm font-mono"
             />
           </div>
 
@@ -87,7 +87,7 @@ export function MetaAccountsSection({ accounts }: MetaAccountsSectionProps) {
               id="meta_account_name"
               name="account_name"
               required
-              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
             />
           </div>
 

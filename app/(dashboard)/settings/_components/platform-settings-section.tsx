@@ -138,7 +138,7 @@ export function PlatformSettingsSection({
   };
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+    <section className="border border-neutral-200 bg-white p-6 shadow-sm">
       <header>
         <h2 className="text-2xl font-semibold">媒体設定</h2>
         <p className="text-sm text-neutral-500">
@@ -154,14 +154,14 @@ export function PlatformSettingsSection({
             </span>
           </div>
           {platformSettings.length === 0 ? (
-            <p className="rounded-md border border-dashed border-neutral-300 px-4 py-6 text-sm text-neutral-500">
+            <p className="border border-dashed border-neutral-300 px-4 py-6 text-sm text-neutral-500">
               まだ登録された媒体設定はありません。右のフォームから媒体設定を追加してください。
             </p>
           ) : (
             platformSettings.map((ps) => (
               <div
                 key={`${ps.section_name}-${ps.platform}`}
-                className={`rounded-md border px-4 py-3 text-sm transition ${
+                className={`border px-4 py-3 text-sm transition ${
                   editingPlatform?.section_name === ps.section_name &&
                   editingPlatform?.platform === ps.platform
                     ? 'border-neutral-900 bg-neutral-50'
@@ -234,7 +234,7 @@ export function PlatformSettingsSection({
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
               disabled={!!editingPlatform}
-              className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 disabled:bg-neutral-50 disabled:text-neutral-500"
+              className="border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 disabled:bg-neutral-50 disabled:text-neutral-500"
             >
               <option value="">選択してください</option>
               {sections.map((section) => (
@@ -253,7 +253,7 @@ export function PlatformSettingsSection({
               value={selectedPlatform}
               onChange={(e) => setSelectedPlatform(e.target.value)}
               disabled={!!editingPlatform}
-              className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 disabled:bg-neutral-50 disabled:text-neutral-500"
+              className="border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 disabled:bg-neutral-50 disabled:text-neutral-500"
             >
               <option value="">選択してください</option>
               {PLATFORM_OPTIONS.map((platform) => (
@@ -297,14 +297,14 @@ export function PlatformSettingsSection({
                 type="text"
                 ref={feeNameInputRef}
                 placeholder="手数料名"
-                className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                className="flex-1 border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
               />
               <input
                 type="number"
                 step="0.01"
                 ref={feeValueInputRef}
                 placeholder="倍率 (例: 1.1)"
-                className="w-32 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                className="w-32 border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
               />
               <button
                 type="button"
@@ -319,7 +319,7 @@ export function PlatformSettingsSection({
                 {Object.entries(feeSettings).map(([name, value]) => (
                   <span
                     key={name}
-                    className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-1 text-xs"
+                    className="inline-flex items-center gap-1 bg-neutral-100 px-2 py-1 text-xs"
                   >
                     {name}: {value}
                     <button
@@ -349,7 +349,7 @@ export function PlatformSettingsSection({
                   name="agency_unit_price"
                   value={agencyUnitPrice}
                   onChange={(e) => setAgencyUnitPrice(e.target.value)}
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                  className="border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
                 />
               </label>
 
@@ -361,7 +361,7 @@ export function PlatformSettingsSection({
                   name="internal_unit_price"
                   value={internalUnitPrice}
                   onChange={(e) => setInternalUnitPrice(e.target.value)}
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                  className="border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
                 />
               </label>
             </>
@@ -378,7 +378,7 @@ export function PlatformSettingsSection({
                 value={grossProfitFee}
                 onChange={(e) => setGrossProfitFee(e.target.value)}
                 placeholder="例: 1.225"
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                className="border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
               />
             </label>
           )}
@@ -390,7 +390,7 @@ export function PlatformSettingsSection({
                 type="text"
                 ref={mspLinkPrefixInputRef}
                 placeholder="接頭辞を入力"
-                className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                className="flex-1 border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
               />
               <button
                 type="button"
@@ -405,7 +405,7 @@ export function PlatformSettingsSection({
                 {mspLinkPrefixes.map((prefix) => (
                   <span
                     key={prefix}
-                    className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-1 text-xs"
+                    className="inline-flex items-center gap-1 bg-neutral-100 px-2 py-1 text-xs"
                   >
                     {prefix}
                     <button
@@ -445,4 +445,3 @@ export function PlatformSettingsSection({
     </section>
   );
 }
-

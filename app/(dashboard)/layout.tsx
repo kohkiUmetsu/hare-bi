@@ -33,7 +33,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     <div className="min-h-screen bg-[var(--primary-color)] text-neutral-900">
       <Header userEmail={user.email} userRole={user.role} />
       <div className="flex w-full flex-col lg:flex-row">
-        <aside className="w-full shrink-0 bg-[var(--accent-color)] px-2 py-4 sm:px-3 sm:py-6 lg:w-28">
+        <aside className="w-full shrink-0 bg-[var(--accent-color-500)] px-2 py-4 sm:px-3 sm:py-6 lg:w-28">
           <nav className="flex flex-wrap justify-center gap-2 lg:flex-col lg:items-stretch lg:justify-start">
             {navigation.map((item) => (
               <NavLink key={item.href} href={item.href} icon={item.icon}>

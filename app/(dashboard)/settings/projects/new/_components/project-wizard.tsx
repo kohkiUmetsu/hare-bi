@@ -194,7 +194,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
 
   if (step === 'project') {
     return (
-      <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+      <div className="border border-neutral-200 bg-white p-6 shadow-sm">
         <header className="mb-6">
           <h2 className="text-2xl font-semibold">ステップ 1: プロジェクト情報</h2>
           <p className="text-sm text-neutral-500">プロジェクト情報と紐づける媒体アカウントを選択してください。</p>
@@ -213,7 +213,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                 id="project_name"
                 name="project_name"
                 required
-                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
                 placeholder="例: プロジェクトA"
               />
             </div>
@@ -261,7 +261,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   type="number"
                   step="1"
                   required
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
                   placeholder="例: 10000"
                 />
               </div>
@@ -276,7 +276,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
             {settings.msp_advertisers.length > 0 && (
               <div>
                 <label className="text-sm font-medium text-neutral-700">MSP広告主</label>
-                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-neutral-200 p-3">
+                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto border border-neutral-200 p-3">
                   {settings.msp_advertisers.map((advertiser) => (
                     <label key={advertiser.id} className="flex items-start gap-2">
                       <input
@@ -299,7 +299,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
             {settings.meta_accounts.length > 0 && (
               <div>
                 <label className="text-sm font-medium text-neutral-700">Metaアカウント</label>
-                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-neutral-200 p-3">
+                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto border border-neutral-200 p-3">
                   {settings.meta_accounts.map((account) => (
                     <label key={account.account_id} className="flex items-start gap-2">
                       <input
@@ -322,7 +322,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
             {settings.tiktok_accounts.length > 0 && (
               <div>
                 <label className="text-sm font-medium text-neutral-700">TikTokアカウント</label>
-                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-neutral-200 p-3">
+                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto border border-neutral-200 p-3">
                   {settings.tiktok_accounts.map((account) => (
                     <label key={account.advertiser_id} className="flex items-start gap-2">
                       <input
@@ -345,7 +345,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
             {settings.google_ads_accounts.length > 0 && (
               <div>
                 <label className="text-sm font-medium text-neutral-700">Google広告アカウント</label>
-                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-neutral-200 p-3">
+                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto border border-neutral-200 p-3">
                   {settings.google_ads_accounts.map((account) => (
                     <label key={account.customer_id} className="flex items-start gap-2">
                       <input
@@ -368,7 +368,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
             {settings.line_accounts.length > 0 && (
               <div>
                 <label className="text-sm font-medium text-neutral-700">LINEアカウント</label>
-                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-neutral-200 p-3">
+                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto border border-neutral-200 p-3">
                   {settings.line_accounts.map((account) => (
                     <label key={account.account_id} className="flex items-start gap-2">
                       <input
@@ -392,7 +392,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
               settings.tiktok_accounts.length === 0 &&
               settings.google_ads_accounts.length === 0 &&
               settings.line_accounts.length === 0 && (
-                <p className="rounded-md border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">
+                <p className="border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">
                   まだ媒体アカウントが登録されていません。
                   <br />
                   先に媒体アカウントを登録してください。
@@ -426,14 +426,14 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
     return (
       <div className="space-y-6">
         {/* Progress indicator */}
-        <div className="rounded-lg border border-neutral-200 bg-white p-4">
+        <div className="border border-neutral-200 bg-white p-4">
           <div className="flex items-center gap-2 text-sm">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-xs font-semibold text-white">
+            <div className="flex h-6 w-6 items-center justify-center bg-green-500 text-xs font-semibold text-white">
               ✓
             </div>
             <span className="font-medium text-neutral-900">プロジェクト作成完了</span>
             <span className="text-neutral-500">→</span>
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white">
+            <div className="flex h-6 w-6 items-center justify-center bg-neutral-900 text-xs font-semibold text-white">
               2
             </div>
             <span className="font-medium text-neutral-900">セクション設定</span>
@@ -442,12 +442,12 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
 
         {/* Section list */}
         {addedSections.length > 0 && (
-          <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="border border-neutral-200 bg-white p-6 shadow-sm">
             <h3 className="mb-3 text-lg font-semibold">追加済みセクション</h3>
             <ul className="space-y-2">
               {addedSections.map((section, index) => (
                 <li key={index} className="flex items-center gap-2 text-sm">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-xs text-green-700">
+                  <div className="flex h-5 w-5 items-center justify-center bg-green-100 text-xs text-green-700">
                     ✓
                   </div>
                   <span>{section}</span>
@@ -458,7 +458,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
         )}
 
         {/* Section form */}
-        <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+        <div className="border border-neutral-200 bg-white p-6 shadow-sm">
           <header className="mb-6">
             <h2 className="text-2xl font-semibold">ステップ 2: セクション設定</h2>
             <p className="text-sm text-neutral-500">
@@ -482,7 +482,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                 id="section_name"
                 name="section_name"
                 required
-                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
                 placeholder="例: セクションA"
               />
             </div>
@@ -494,7 +494,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                 <input
                   ref={mspPrefixInputRef}
                   type="text"
-                  className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="flex-1 border border-neutral-300 px-3 py-2 text-sm"
                   placeholder="接頭辞を入力"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddMspPrefix(); } }}
                 />
@@ -511,7 +511,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   {mspPrefixes.map((prefix, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700"
+                      className="inline-flex items-center gap-1 bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700"
                     >
                       {prefix}
                       <button
@@ -534,7 +534,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                 <input
                   ref={campaignPrefixInputRef}
                   type="text"
-                  className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="flex-1 border border-neutral-300 px-3 py-2 text-sm"
                   placeholder="接頭辞を入力"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCampaignPrefix(); } }}
                 />
@@ -551,7 +551,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   {campaignPrefixes.map((prefix, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700"
+                      className="inline-flex items-center gap-1 bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700"
                     >
                       {prefix}
                       <button
@@ -574,7 +574,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                 <input
                   ref={campaignKeywordInputRef}
                   type="text"
-                  className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="flex-1 border border-neutral-300 px-3 py-2 text-sm"
                   placeholder="キーワードを入力"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCampaignKeyword(); } }}
                 />
@@ -591,7 +591,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   {campaignKeywords.map((keyword, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700"
+                      className="inline-flex items-center gap-1 bg-green-100 px-3 py-1 text-xs font-medium text-green-700"
                     >
                       {keyword}
                       <button
@@ -614,7 +614,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   type="checkbox"
                   checked={catchAllMsp}
                   onChange={(e) => setCatchAllMsp(e.target.checked)}
-                  className="h-4 w-4 rounded"
+                  className="h-4 w-4"
                 />
                 <span className="text-sm font-medium text-neutral-700">MSPキャッチオール</span>
               </label>
@@ -623,7 +623,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   type="checkbox"
                   checked={catchAllCampaign}
                   onChange={(e) => setCatchAllCampaign(e.target.checked)}
-                  className="h-4 w-4 rounded"
+                  className="h-4 w-4"
                 />
                 <span className="text-sm font-medium text-neutral-700">キャンペーンキャッチオール</span>
               </label>
@@ -632,7 +632,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   type="checkbox"
                   checked={inHouseOperation}
                   onChange={(e) => setInHouseOperation(e.target.checked)}
-                  className="h-4 w-4 rounded"
+                  className="h-4 w-4"
                 />
                 <span className="text-sm font-medium text-neutral-700">自社運用</span>
               </label>
@@ -678,19 +678,19 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
     return (
       <div className="space-y-6">
         {/* Progress indicator */}
-        <div className="rounded-lg border border-neutral-200 bg-white p-4">
+        <div className="border border-neutral-200 bg-white p-4">
           <div className="flex items-center gap-2 text-sm">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-xs font-semibold text-white">
+            <div className="flex h-6 w-6 items-center justify-center bg-green-500 text-xs font-semibold text-white">
               ✓
             </div>
             <span className="font-medium text-neutral-900">プロジェクト作成完了</span>
             <span className="text-neutral-500">→</span>
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-xs font-semibold text-white">
+            <div className="flex h-6 w-6 items-center justify-center bg-green-500 text-xs font-semibold text-white">
               ✓
             </div>
             <span className="font-medium text-neutral-900">セクション設定完了</span>
             <span className="text-neutral-500">→</span>
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white">
+            <div className="flex h-6 w-6 items-center justify-center bg-neutral-900 text-xs font-semibold text-white">
               3
             </div>
             <span className="font-medium text-neutral-900">媒体設定</span>
@@ -699,12 +699,12 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
 
         {/* Platform list */}
         {addedPlatforms.length > 0 && (
-          <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="border border-neutral-200 bg-white p-6 shadow-sm">
             <h3 className="mb-3 text-lg font-semibold">追加済み媒体設定</h3>
             <ul className="space-y-2">
               {addedPlatforms.map((item, index) => (
                 <li key={index} className="flex items-center gap-2 text-sm">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-xs text-green-700">
+                  <div className="flex h-5 w-5 items-center justify-center bg-green-100 text-xs text-green-700">
                     ✓
                   </div>
                   <span>{item.section} / {item.platform}</span>
@@ -715,7 +715,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
         )}
 
         {/* Platform form */}
-        <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+        <div className="border border-neutral-200 bg-white p-6 shadow-sm">
           <header className="mb-6">
             <h2 className="text-2xl font-semibold">ステップ 3: 媒体設定</h2>
             <p className="text-sm text-neutral-500">
@@ -737,7 +737,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                 required
                 value={selectedSection}
                 onChange={(e) => setSelectedSection(e.target.value)}
-                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
               >
                 <option value="">選択してください</option>
                 {addedSections.map((section) => (
@@ -759,7 +759,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                 required
                 value={selectedPlatform}
                 onChange={(e) => setSelectedPlatform(e.target.value)}
-                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
               >
                 <option value="">選択してください</option>
                 {PLATFORM_OPTIONS.map((platform) => (
@@ -808,7 +808,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                 <input
                   ref={feeNameInputRef}
                   type="text"
-                  className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="flex-1 border border-neutral-300 px-3 py-2 text-sm"
                   placeholder="手数料名"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddFee(); } }}
                 />
@@ -816,7 +816,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   ref={feeValueInputRef}
                   type="number"
                   step="0.01"
-                  className="w-32 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="w-32 border border-neutral-300 px-3 py-2 text-sm"
                   placeholder="倍率 (例: 1.1)"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddFee(); } }}
                 />
@@ -833,7 +833,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   {Object.entries(feeSettings).map(([name, value]) => (
                     <span
                       key={name}
-                      className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700"
+                      className="inline-flex items-center gap-1 bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700"
                     >
                       {name}: {value}
                       <button
@@ -865,7 +865,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                     name="agency_unit_price"
                     type="number"
                     step="0.01"
-                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
                     placeholder="例: 10000"
                   />
                 </div>
@@ -878,7 +878,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                     name="internal_unit_price"
                     type="number"
                     step="0.01"
-                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
                     placeholder="例: 8000"
                   />
                 </div>
@@ -897,7 +897,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   type="number"
                   step="any"
                   required={platformReportType === 'budget'}
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
                   placeholder="例: 0.05"
                 />
               </div>
@@ -910,7 +910,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                 <input
                   ref={mspLinkPrefixInputRef}
                   type="text"
-                  className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="flex-1 border border-neutral-300 px-3 py-2 text-sm"
                   placeholder="接頭辞を入力"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddMspLinkPrefix(); } }}
                 />
@@ -927,7 +927,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                   {mspLinkPrefixes.map((prefix, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700"
+                      className="inline-flex items-center gap-1 bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700"
                     >
                       {prefix}
                       <button
@@ -979,8 +979,8 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
 
   if (step === 'complete') {
     return (
-      <div className="rounded-lg border border-neutral-200 bg-white p-8 shadow-sm text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+      <div className="border border-neutral-200 bg-white p-8 shadow-sm text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center bg-green-100">
           <svg
             className="h-8 w-8 text-green-600"
             fill="none"

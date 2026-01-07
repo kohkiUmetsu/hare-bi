@@ -29,8 +29,8 @@ export function NavLink({ href, children, icon }: NavLinkProps) {
   const Icon = icon ? iconMap[icon] : null;
 
   const baseClasses =
-    "flex w-full flex-col items-center justify-center gap-1.5 rounded-md px-2 py-2.5 text-sm font-medium transition-colors";
-  const activeClasses = "bg-[var(--accent-color)]/20 text-white shadow-sm";
+    "flex w-full flex-col items-center justify-center gap-1.5 px-2 py-2.5 text-sm font-medium transition-colors";
+  const activeClasses = "bg-[var(--accent-color-400)] text-white shadow-sm";
   const inactiveClasses = "text-white/80 hover:bg-white/10 hover:text-white";
 
   return (

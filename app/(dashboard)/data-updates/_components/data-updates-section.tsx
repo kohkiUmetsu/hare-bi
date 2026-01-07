@@ -25,7 +25,7 @@ export function DataUpdatesSection({ request, projectNames }: DataUpdatesSection
   };
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+    <section className="border border-neutral-200 bg-white p-6 shadow-sm">
       <header className="space-y-2">
         <h2 className="text-2xl font-semibold">データ更新リクエスト</h2>
         <p className="text-sm text-neutral-500">
@@ -40,7 +40,7 @@ export function DataUpdatesSection({ request, projectNames }: DataUpdatesSection
         )}
       </header>
 
-      <form action={handleAction} className="mt-6 flex flex-col gap-4 rounded-md border border-neutral-200 p-4">
+      <form action={handleAction} className="mt-6 flex flex-col gap-4 border border-neutral-200 p-4">
         <div>
           <label className="text-sm font-medium text-neutral-700" htmlFor="report_project_name">
             プロジェクト名
@@ -50,7 +50,7 @@ export function DataUpdatesSection({ request, projectNames }: DataUpdatesSection
             name="project_name"
             required
             defaultValue={request?.project_name ?? ''}
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
           >
             <option value="" disabled>
               プロジェクトを選択してください
@@ -74,7 +74,7 @@ export function DataUpdatesSection({ request, projectNames }: DataUpdatesSection
               type="date"
               required
               defaultValue={request?.start_date ?? ''}
-              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
             />
           </div>
           <div>
@@ -87,7 +87,7 @@ export function DataUpdatesSection({ request, projectNames }: DataUpdatesSection
               type="date"
               required
               defaultValue={request?.end_date ?? ''}
-              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
             />
           </div>
         </div>

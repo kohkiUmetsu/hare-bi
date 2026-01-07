@@ -57,11 +57,11 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
   if (!metrics.length) {
     return (
       <>
-        <article className="rounded-lg border border-neutral-200 bg-white px-4 py-4 shadow-sm">
+        <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm">
           <h2 className="text-sm font-semibold text-neutral-700">CV件数 / CPA 推移</h2>
           <p className="mt-4 text-sm text-neutral-500">表示するデータがありません。</p>
         </article>
-        <article className="rounded-lg border border-neutral-200 bg-white px-4 py-4 shadow-sm">
+        <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm">
           <h2 className="text-sm font-semibold text-neutral-700">実広告費 推移</h2>
           <p className="mt-4 text-sm text-neutral-500">表示するデータがありません。</p>
         </article>
@@ -71,7 +71,7 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
 
   return (
     <>
-      <article className="rounded-lg border border-neutral-200 bg-white px-4 py-4 shadow-sm">
+      <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm">
         <h2 className="text-sm font-semibold text-neutral-700">CV件数 / CPA 推移</h2>
         <div className="mt-4 h-64">
           <ResponsiveContainer>
@@ -129,7 +129,7 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
         </div>
       </article>
 
-      <article className="rounded-lg border border-neutral-200 bg-white px-4 py-4 shadow-sm">
+      <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm">
         <h2 className="text-sm font-semibold text-neutral-700">実広告費 推移</h2>
         <div className="mt-4 h-64">
           <ResponsiveContainer>

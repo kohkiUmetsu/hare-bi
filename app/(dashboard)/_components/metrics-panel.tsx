@@ -28,7 +28,7 @@ interface MetricsPanelProps {
 export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelProps) {
   if (!metrics.length) {
     return (
-      <section className="rounded-lg bg-white px-4 py-6 text-sm text-neutral-500 shadow-sm">
+      <section className="bg-white px-4 py-6 text-sm text-neutral-500 shadow-sm">
         表示するデータがありません。条件を変更して再度お試しください。
       </section>
     );
@@ -86,7 +86,7 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
           return (
             <article
               key={label}
-              className="rounded-lg bg-white px-4 py-3 shadow-sm"
+              className="bg-white px-4 py-3 shadow-sm"
             >
               <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
               <p className="mt-2 text-2xl font-semibold">
@@ -102,7 +102,7 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
               />
 
               {key && breakdowns?.[key]?.length ? (
-                <div className="mt-3 overflow-hidden rounded border border-neutral-200">
+                <div className="mt-3 overflow-hidden border border-neutral-200">
                   <table className="w-full text-xs">
                     <thead className="bg-neutral-50">
                       <tr>
@@ -145,7 +145,7 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
           return (
             <article
               key={label}
-              className="rounded-lg bg-white px-4 py-3 shadow-sm"
+              className="bg-white px-4 py-3 shadow-sm"
             >
               <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
               <p className="mt-2 text-2xl font-semibold">
@@ -171,7 +171,7 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
           return (
             <article
               key={label}
-              className="rounded-lg bg-white px-4 py-3 shadow-sm"
+              className="bg-white px-4 py-3 shadow-sm"
             >
               <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
               <p className="mt-2 text-2xl font-semibold">
@@ -188,7 +188,7 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
       </section>
 
       {hideTable ? null : (
-        <section className="overflow-x-auto rounded-lg bg-white shadow-sm">
+        <section className="overflow-x-auto bg-white shadow-sm">
           <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
             <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-wider text-neutral-500 sm:text-xs">
               <tr>

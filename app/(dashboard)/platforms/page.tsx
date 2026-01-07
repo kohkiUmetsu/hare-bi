@@ -188,13 +188,13 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
       />
 
       {loadError ? (
-        <section className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <section className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {loadError}
         </section>
       ) : null}
 
       {!loadError && !selectedPlatformId ? (
-        <section className="rounded-lg border border-dashed border-neutral-300 bg-white px-4 py-6 text-sm text-neutral-500">
+        <section className="border border-dashed border-neutral-300 bg-white px-4 py-6 text-sm text-neutral-500">
           {platforms.length === 0
             ? 'プラットフォームが存在しません。BigQueryにデータを追加してから再度アクセスしてください。'
             : 'プロジェクト / セクション / プラットフォームを選択し、「表示」を押してください。'}

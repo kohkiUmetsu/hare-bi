@@ -19,7 +19,7 @@ export default async function NewProjectPage() {
         </div>
         <Link
           href="/settings"
-          className="inline-flex items-center rounded-md border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm transition hover:bg-neutral-50"
+          className="inline-flex items-center border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm transition hover:bg-neutral-50"
         >
           一覧に戻る
         </Link>

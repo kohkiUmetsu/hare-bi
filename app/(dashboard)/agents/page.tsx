@@ -34,7 +34,7 @@ export default async function AgentsPage() {
         </p>
       </header>
 
-      <section className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+      <section className="border border-neutral-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold">新規代理店の作成</h2>
         <p className="mt-1 text-sm text-neutral-500">指定したメールに初期パスワードを共有してください。</p>
         <div className="mt-6">
@@ -42,7 +42,7 @@ export default async function AgentsPage() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+      <section className="border border-neutral-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold">登録済み代理店</h2>
         {agents.length === 0 ? (
           <p className="mt-4 text-sm text-neutral-500">登録済みの代理店アカウントはまだありません。</p>

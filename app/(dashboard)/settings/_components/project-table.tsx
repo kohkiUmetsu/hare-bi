@@ -35,7 +35,7 @@ export function ProjectTable({ rows }: ProjectTableProps) {
   const hasRows = rows.length > 0;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+    <div className="overflow-hidden border border-neutral-200 bg-white shadow-sm">
       <table className="min-w-full divide-y divide-neutral-200 text-sm">
         <thead className="bg-neutral-50 text-xs font-semibold uppercase tracking-wider text-neutral-500">
           <tr>

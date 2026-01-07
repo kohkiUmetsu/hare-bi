@@ -7,22 +7,20 @@ interface HeaderProps {
 
 export function Header({ userEmail, userRole }: HeaderProps) {
   return (
-    <header className="bg-[var(--white)] shadow-sm">
+    <header className="bg-[var(--accent-color-600)] shadow-sm">
       <div className="flex items-center justify-between px-4 py-4 sm:px-6">
-        <div className="text-xl font-semibold text-neutral-900">Amateras</div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="text-sm font-medium text-neutral-900">
-              {userEmail ?? "未設定"}
-            </div>
-            <div className="text-xs text-neutral-500">
+        <div className="text-xl font-semibold text-white">Amateras</div>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2 text-right text-sm font-medium text-white">
+            <span>{userEmail ?? "未設定"}</span>
+            <span className="bg-white px-2 py-0.5 text-[var(--accent-color-600)]">
               {userRole === "admin" ? "管理者" : "代理店"}
-            </div>
+            </span>
           </div>
           <form action={signOut}>
             <button
               type="submit"
-              className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800"
+              className="rounded-md bg-[var(--accent-color-500)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
             >
               ログアウト
             </button>

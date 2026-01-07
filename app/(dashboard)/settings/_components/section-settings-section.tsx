@@ -121,7 +121,7 @@ export function SectionSettingsSection({
   };
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+    <section className="border border-neutral-200 bg-white p-6 shadow-sm">
       <header>
         <h2 className="text-2xl font-semibold">セクション設定</h2>
         <p className="text-sm text-neutral-500">
@@ -139,14 +139,14 @@ export function SectionSettingsSection({
             </span>
           </div>
           {sections.length === 0 ? (
-            <p className="rounded-md border border-dashed border-neutral-300 px-4 py-6 text-sm text-neutral-500">
+            <p className="border border-dashed border-neutral-300 px-4 py-6 text-sm text-neutral-500">
               まだ登録されたセクションはありません。右のフォームからセクションを追加してください。
             </p>
           ) : (
             sections.map((section) => (
               <div
                 key={`${section.section_name}-${section.project_name}`}
-                className={`rounded-md border px-4 py-3 text-sm transition ${
+                className={`border px-4 py-3 text-sm transition ${
                   editingSection?.section_name === section.section_name &&
                   editingSection?.project_name === section.project_name
                     ? 'border-neutral-900 bg-neutral-50'
@@ -210,7 +210,7 @@ export function SectionSettingsSection({
               required
               defaultValue={editingSection?.section_name}
               readOnly={!!editingSection}
-              className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 disabled:bg-neutral-50 disabled:text-neutral-500"
+              className="border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 disabled:bg-neutral-50 disabled:text-neutral-500"
             />
           </label>
 
@@ -222,7 +222,7 @@ export function SectionSettingsSection({
                 name="project_name"
                 value={fixedProjectName}
                 readOnly
-                className="rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm text-neutral-500"
+                className="border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm text-neutral-500"
               />
             ) : (
               <>
@@ -233,7 +233,7 @@ export function SectionSettingsSection({
                   required
                   defaultValue={editingSection?.project_name}
                   readOnly={!!editingSection}
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 disabled:bg-neutral-50 disabled:text-neutral-500"
+                  className="border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 disabled:bg-neutral-50 disabled:text-neutral-500"
                 />
                 <datalist id={datalistId}>
                   {projectNames.map((name) => (
@@ -251,7 +251,7 @@ export function SectionSettingsSection({
                 type="text"
                 ref={mspPrefixInputRef}
                 placeholder="接頭辞を入力"
-                className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                className="flex-1 border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
               />
               <button
                 type="button"
@@ -266,7 +266,7 @@ export function SectionSettingsSection({
                 {mspPrefixes.map((prefix) => (
                   <span
                     key={prefix}
-                    className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-1 text-xs"
+                    className="inline-flex items-center gap-1 bg-neutral-100 px-2 py-1 text-xs"
                   >
                     {prefix}
                     <button
@@ -289,7 +289,7 @@ export function SectionSettingsSection({
                 type="text"
                 ref={campaignPrefixInputRef}
                 placeholder="接頭辞を入力"
-                className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                className="flex-1 border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
               />
               <button
                 type="button"
@@ -304,7 +304,7 @@ export function SectionSettingsSection({
                 {campaignPrefixes.map((prefix) => (
                   <span
                     key={prefix}
-                    className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-1 text-xs"
+                    className="inline-flex items-center gap-1 bg-neutral-100 px-2 py-1 text-xs"
                   >
                     {prefix}
                     <button
@@ -327,7 +327,7 @@ export function SectionSettingsSection({
                 type="text"
                 ref={campaignKeywordInputRef}
                 placeholder="キーワードを入力"
-                className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                className="flex-1 border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
               />
               <button
                 type="button"
@@ -342,7 +342,7 @@ export function SectionSettingsSection({
                 {campaignKeywords.map((keyword) => (
                   <span
                     key={keyword}
-                    className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-1 text-xs"
+                    className="inline-flex items-center gap-1 bg-neutral-100 px-2 py-1 text-xs"
                   >
                     {keyword}
                     <button
@@ -363,7 +363,7 @@ export function SectionSettingsSection({
               type="checkbox"
               checked={catchAllMsp}
               onChange={(e) => setCatchAllMsp(e.target.checked)}
-              className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
+              className="h-4 w-4 border-neutral-300 text-neutral-900 focus:ring-neutral-900"
             />
             <span className="text-sm font-medium text-neutral-700">MSPキャッチオール</span>
           </label>
@@ -373,7 +373,7 @@ export function SectionSettingsSection({
               type="checkbox"
               checked={catchAllCampaign}
               onChange={(e) => setCatchAllCampaign(e.target.checked)}
-              className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
+              className="h-4 w-4 border-neutral-300 text-neutral-900 focus:ring-neutral-900"
             />
             <span className="text-sm font-medium text-neutral-700">キャンペーンキャッチオール</span>
           </label>
@@ -383,7 +383,7 @@ export function SectionSettingsSection({
               type="checkbox"
               checked={inHouseOperation}
               onChange={(e) => setInHouseOperation(e.target.checked)}
-              className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
+              className="h-4 w-4 border-neutral-300 text-neutral-900 focus:ring-neutral-900"
             />
             <span className="text-sm font-medium text-neutral-700">自社運用</span>
           </label>

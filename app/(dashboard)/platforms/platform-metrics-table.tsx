@@ -115,7 +115,7 @@ export function PlatformMetricsTable({
     <section className="flex flex-col gap-3">
       {toast.status && toast.message ? (
         <div
-          className={`flex items-center justify-between rounded-md border px-4 py-2 text-sm ${
+          className={`flex items-center justify-between border px-4 py-2 text-sm ${
             toast.status === 'success'
               ? 'border-green-200 bg-green-50 text-green-700'
               : 'border-red-200 bg-red-50 text-red-700'
@@ -136,7 +136,7 @@ export function PlatformMetricsTable({
         各行をクリックすると、対象日の実CVを直接編集できます。
       </p>
 
-      <section className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
+      <section className="overflow-x-auto border border-neutral-200 bg-white shadow-sm">
         <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
           <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-wider text-neutral-500 sm:text-xs">
             <tr>
@@ -206,7 +206,7 @@ export function PlatformMetricsTable({
           onClick={closeEditor}
         >
           <div
-            className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl"
+            className="w-full max-w-lg bg-white p-6 shadow-xl"
             role="dialog"
             aria-modal="true"
             onClick={(event) => event.stopPropagation()}
@@ -249,7 +249,7 @@ export function PlatformMetricsTable({
                   inputMode="numeric"
                   min={0}
                   step={1}
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-lg font-semibold text-neutral-900 focus:border-neutral-500 focus:outline-none"
+                  className="mt-1 w-full border border-neutral-300 px-3 py-2 text-lg font-semibold text-neutral-900 focus:border-neutral-500 focus:outline-none"
                   value={actualCvInput}
                   onChange={(event) => setActualCvInput(event.target.value)}
                   autoFocus
@@ -269,7 +269,7 @@ export function PlatformMetricsTable({
                 ))}
               </div>
 
-              <div className="rounded-md bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
+              <div className="bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
                 <p>
                   現在: <span className="font-semibold text-neutral-900">{countFormatter.format(currentValue)}</span>
                 </p>
@@ -298,7 +298,7 @@ export function PlatformMetricsTable({
               </div>
 
               {errorMessage ? (
-                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <p className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                   {errorMessage}
                 </p>
               ) : null}

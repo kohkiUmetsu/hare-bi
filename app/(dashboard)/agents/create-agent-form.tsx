@@ -42,7 +42,7 @@ export function CreateAgentForm({ sections }: CreateAgentFormProps) {
           name="email"
           type="email"
           required
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none"
+          className="border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none"
         />
       </div>
 
@@ -56,7 +56,7 @@ export function CreateAgentForm({ sections }: CreateAgentFormProps) {
           type="password"
           minLength={6}
           required
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none"
+          className="border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none"
         />
       </div>
 
@@ -68,7 +68,7 @@ export function CreateAgentForm({ sections }: CreateAgentFormProps) {
           id="sectionId"
           name="sectionId"
           required
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none"
+          className="border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none"
           defaultValue=""
           disabled={sections.length === 0}
         >
@@ -90,13 +90,13 @@ export function CreateAgentForm({ sections }: CreateAgentFormProps) {
       </div>
 
       {state?.error ? (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.error}
         </div>
       ) : null}
 
       {state?.success ? (
-        <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+        <div className="border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
           {state.success}
         </div>
       ) : null}

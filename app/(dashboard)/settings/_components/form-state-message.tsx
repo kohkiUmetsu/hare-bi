@@ -13,7 +13,7 @@ export function FormStateMessage({ state }: FormStateMessageProps) {
 
   const isSuccess = state.status === 'success';
   const baseClass =
-    'rounded-md px-3 py-2 text-sm ' +
+    'px-3 py-2 text-sm ' +
     (isSuccess
       ? 'border border-green-200 bg-green-50 text-green-800'
       : 'border border-red-200 bg-red-50 text-red-700');
