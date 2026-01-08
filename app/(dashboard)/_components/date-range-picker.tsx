@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { Calendar } from '@/components/ui/calendar';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 const PRESETS = [
   { key: 'today', label: '今日' },
@@ -111,6 +110,29 @@ export function DateRangePicker({ startDate, endDate }: DateRangePickerProps) {
     setRange(getPresetRange(key));
   };
 
+  const activePresetKey = useMemo(() => {
+    if (!range?.from || !range?.to) {
+      return null;
+    }
+
+    const from = formatDate(range.from);
+    const to = formatDate(range.to);
+
+    for (const preset of PRESETS) {
+      const presetRange = getPresetRange(preset.key);
+      if (
+        presetRange.from &&
+        presetRange.to &&
+        formatDate(presetRange.from) === from &&
+        formatDate(presetRange.to) === to
+      ) {
+        return preset.key;
+      }
+    }
+
+    return null;
+  }, [range]);
+
   const currentLabel = useMemo(() => {
     if (!range?.from || !range?.to) {
       return '期間未選択';
@@ -130,7 +152,12 @@ export function DateRangePicker({ startDate, endDate }: DateRangePickerProps) {
             key={preset.key}
             type="button"
             onClick={() => applyPreset(preset.key)}
-            className="rounded-md border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+            className={cn(
+              'px-4 py-2 text-sm font-medium transition-colors',
+              activePresetKey === preset.key
+                ? 'bg-[#f4d03f] text-neutral-900 hover:bg-[#f0c929]'
+                : 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
+            )}
           >
             {preset.label}
           </button>
@@ -138,17 +165,21 @@ export function DateRangePicker({ startDate, endDate }: DateRangePickerProps) {
       </div>
 
       <div className="relative">
-        <Button
+        <button
           type="button"
-          variant="outline"
           onClick={() => setOpen((prev) => !prev)}
           className={cn(
-            'w-full justify-start text-left font-normal',
-            !range?.from || !range?.to ? 'text-muted-foreground' : ''
+            'h-11 w-full appearance-none border border-neutral-300 bg-white px-4 pr-10 text-left text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)]',
+            !range?.from || !range?.to ? 'text-neutral-500' : ''
           )}
         >
           {currentLabel}
-        </Button>
+        </button>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-600">
+          <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+          </svg>
+        </div>
         {open ? (
           <div className="absolute z-10 mt-2 border border-neutral-200 bg-white p-2 shadow-lg">
             <Calendar

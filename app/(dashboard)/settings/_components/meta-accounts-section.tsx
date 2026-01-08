@@ -34,14 +34,14 @@ export function MetaAccountsSection({ accounts }: MetaAccountsSectionProps) {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="overflow-auto border border-neutral-200">
           <table className="min-w-full divide-y divide-neutral-200 text-sm">
-            <thead className="bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <thead className="bg-[#3F3F3F] text-xs font-semibold uppercase tracking-wide text-white">
               <tr>
                 <th className="px-3 py-2 text-left">アカウントID</th>
                 <th className="px-3 py-2 text-left">アカウント名</th>
                 <th className="px-3 py-2 text-right">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200">
+            <tbody className="divide-y divide-neutral-200 bg-white">
               {accounts.length === 0 ? (
                 <tr>
                   <td colSpan={3} className="px-3 py-3 text-center text-sm text-neutral-500">
@@ -50,7 +50,7 @@ export function MetaAccountsSection({ accounts }: MetaAccountsSectionProps) {
                 </tr>
               ) : (
                 accounts.map((account) => (
-                  <tr key={account.account_id}>
+                  <tr key={account.account_id} className="odd:bg-white even:bg-[#F5F7FA]">
                     <td className="px-3 py-2 font-mono text-xs">{account.account_id}</td>
                     <td className="px-3 py-2">{account.account_name}</td>
                     <td className="px-3 py-2 text-right">
@@ -95,7 +95,7 @@ export function MetaAccountsSection({ accounts }: MetaAccountsSectionProps) {
 
           <button
             type="submit"
-            className="mt-2 inline-flex items-center justify-center rounded-md bg-neutral-900 px-3 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
+            className="mt-2 inline-flex items-center justify-center rounded-md bg-[var(--accent-color)] px-3 py-2 text-sm font-semibold text-white hover:opacity-90"
           >
             保存
           </button>

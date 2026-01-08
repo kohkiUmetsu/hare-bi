@@ -412,7 +412,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
             </button>
             <button
               type="submit"
-              className="inline-flex flex-1 items-center justify-center rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+              className="inline-flex flex-1 items-center justify-center rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
             >
               次へ：セクション設定
             </button>
@@ -650,7 +650,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
               </button>
               <button
                 type="submit"
-                className="inline-flex flex-1 items-center justify-center rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+                className="inline-flex flex-1 items-center justify-center rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
               >
                 セクションを追加
               </button>
@@ -955,7 +955,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
               </button>
               <button
                 type="submit"
-                className="inline-flex flex-1 items-center justify-center rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+                className="inline-flex flex-1 items-center justify-center rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
               >
                 媒体設定を追加
               </button>
@@ -1002,7 +1002,7 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
         <button
           type="button"
           onClick={handleFinish}
-          className="inline-flex items-center justify-center rounded-md bg-neutral-900 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+          className="inline-flex items-center justify-center rounded-md bg-[var(--accent-color)] px-6 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
         >
           設定一覧に戻る
         </button>

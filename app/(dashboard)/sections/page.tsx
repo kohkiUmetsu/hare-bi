@@ -119,12 +119,18 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold">セクション指標</h1>
-        <p className="text-sm text-neutral-500">
-          セクションごとのdailyレコードを集計し、主要指標を確認します。
-        </p>
+      <header className="flex items-center gap-4">
+        <h1 className="text-4xl font-bold text-[var(--accent-color)] tracking-wide">SECTION</h1>
+        <button type="button" className="text-4xl text-[var(--accent-color)] hover:opacity-80 leading-none flex items-center">
+          ‹
+        </button>
+        <button type="button" className="text-4xl text-[var(--accent-color)] hover:opacity-80 leading-none flex items-center">
+          ›
+        </button>
       </header>
+      <p className="text-sm text-neutral-700">
+        セクションごとのdailyレコードを集計し、主要指標を確認します。
+      </p>
 
       <SectionFilterForm
         projectOptions={projectOptions}
@@ -138,14 +144,6 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
       {loadError ? (
         <section className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {loadError}
-        </section>
-      ) : null}
-
-      {!loadError && !selectedSectionId ? (
-        <section className="border border-dashed border-neutral-300 bg-white px-4 py-6 text-sm text-neutral-500">
-          {projectOptions.length === 0
-            ? 'セクションが存在しません。BigQueryにデータを追加してから再度アクセスしてください。'
-            : 'プロジェクトとセクションを選択し、「表示」を押してください。'}
         </section>
       ) : null}
 

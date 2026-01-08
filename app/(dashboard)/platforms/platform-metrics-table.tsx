@@ -138,7 +138,7 @@ export function PlatformMetricsTable({
 
       <section className="overflow-x-auto border border-neutral-200 bg-white shadow-sm">
         <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
-          <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-wider text-neutral-500 sm:text-xs">
+          <thead className="bg-[#3F3F3F] text-left text-[11px] uppercase tracking-wider text-white sm:text-xs">
             <tr>
               <th className="px-4 py-3">日付</th>
               <th className="px-4 py-3">広告費</th>
@@ -157,7 +157,7 @@ export function PlatformMetricsTable({
               {showPerformanceFee ? <th className="px-4 py-3">成果報酬費</th> : null}
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
+          <tbody className="divide-y divide-neutral-100 bg-white">
             {metrics.map((row) => (
               <tr
                 key={row.date}
@@ -169,7 +169,7 @@ export function PlatformMetricsTable({
                     openEditor(row);
                   }
                 }}
-                className="whitespace-nowrap cursor-pointer transition-colors hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
+                className="whitespace-nowrap cursor-pointer transition-colors odd:bg-white even:bg-[#F5F7FA] hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
               >
                 <td className="px-4 py-3 text-neutral-700">{row.date}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualAdCost)}</td>
@@ -314,7 +314,7 @@ export function PlatformMetricsTable({
                 </button>
                 <button
                   type="submit"
-                  className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={!isActualCvValid || !hasChanges || isSubmitting}
                 >
                   {isSubmitting ? '保存中...' : '保存'}

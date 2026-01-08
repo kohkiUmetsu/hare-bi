@@ -256,7 +256,7 @@ export function SectionSettingsSection({
               <button
                 type="button"
                 onClick={handleAddMspPrefix}
-                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700"
+                className="rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
               >
                 追加
               </button>
@@ -294,7 +294,7 @@ export function SectionSettingsSection({
               <button
                 type="button"
                 onClick={handleAddCampaignPrefix}
-                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700"
+                className="rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
               >
                 追加
               </button>
@@ -332,7 +332,7 @@ export function SectionSettingsSection({
               <button
                 type="button"
                 onClick={handleAddCampaignKeyword}
-                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700"
+                className="rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
               >
                 追加
               </button>
@@ -402,7 +402,7 @@ export function SectionSettingsSection({
             )}
             <button
               type="submit"
-              className="flex-1 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700"
+              className="flex-1 rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
             >
               {editingSection ? 'セクションを更新' : 'セクションを追加'}
             </button>

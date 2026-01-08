@@ -49,17 +49,17 @@ export default async function AgentsPage() {
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full divide-y divide-neutral-200 text-sm">
-              <thead>
-                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              <thead className="bg-[#3F3F3F] text-white">
+                <tr className="text-left text-xs font-semibold uppercase tracking-wide">
                   <th className="px-3 py-2">メールアドレス</th>
                   <th className="px-3 py-2">セクション</th>
                   <th className="px-3 py-2">作成日</th>
                   <th className="px-3 py-2 text-right">操作</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200">
+              <tbody className="divide-y divide-neutral-200 bg-white">
                 {agents.map((agent) => (
-                  <tr key={agent.id}>
+                  <tr key={agent.id} className="odd:bg-white even:bg-[#F5F7FA]">
                     <td className="px-3 py-2 font-medium text-neutral-900">{agent.email}</td>
                     <td className="px-3 py-2">{renderSection(agent.sectionId ?? null)}</td>
                     <td className="px-3 py-2 text-neutral-500">

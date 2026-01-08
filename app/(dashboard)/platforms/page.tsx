@@ -170,12 +170,18 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold">プラットフォーム指標</h1>
-        <p className="text-sm text-neutral-500">
-          プラットフォーム単位のdailyレコードを集計し、成果指標を可視化します。
-        </p>
+      <header className="flex items-center gap-4">
+        <h1 className="text-4xl font-bold text-[var(--accent-color)] tracking-wide">PLATFORM</h1>
+        <button type="button" className="text-4xl text-[var(--accent-color)] hover:opacity-80 leading-none flex items-center">
+          ‹
+        </button>
+        <button type="button" className="text-4xl text-[var(--accent-color)] hover:opacity-80 leading-none flex items-center">
+          ›
+        </button>
       </header>
+      <p className="text-sm text-neutral-700">
+        プラットフォーム単位のdailyレコードを集計し、成果指標を可視化します。
+      </p>
 
       <PlatformFilterForm
         projectOptions={projectOptions}
@@ -190,14 +196,6 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
       {loadError ? (
         <section className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {loadError}
-        </section>
-      ) : null}
-
-      {!loadError && !selectedPlatformId ? (
-        <section className="border border-dashed border-neutral-300 bg-white px-4 py-6 text-sm text-neutral-500">
-          {platforms.length === 0
-            ? 'プラットフォームが存在しません。BigQueryにデータを追加してから再度アクセスしてください。'
-            : 'プロジェクト / セクション / プラットフォームを選択し、「表示」を押してください。'}
         </section>
       ) : null}
 

@@ -13,7 +13,7 @@ function SubmitButton() {
   return (
     <button
       type="submit"
-      className="w-full rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+      className="w-full rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       disabled={pending}
     >
       {pending ? '作成中...' : '代理店アカウントを作成'}

@@ -88,7 +88,7 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
               key={label}
               className="bg-white px-4 py-3 shadow-sm"
             >
-              <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
+              <h2 className="text-sm font-bold text-neutral-600">{label}</h2>
               <p className="mt-2 text-2xl font-semibold">
                 {prefix ?? ''}
                 {formatMetric(value, format)}
@@ -102,20 +102,23 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
               />
 
               {key && breakdowns?.[key]?.length ? (
-                <div className="mt-3 overflow-hidden border border-neutral-200">
+                <div className="mt-3 overflow-hidden">
                   <table className="w-full text-xs">
-                    <thead className="bg-neutral-50">
+                    <thead className="bg-[#E7ECF0]">
                       <tr>
                         <th className="px-2 py-1.5 text-left font-medium text-neutral-600">項目</th>
                         <th className="px-2 py-1.5 text-right font-medium text-neutral-600">値</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-neutral-100 bg-white">
+                    <tbody className="bg-white">
                       {breakdowns[key]!
                         .filter((item) => item.value > 0)
                         .slice(0, 5)
                         .map((item) => (
-                          <tr key={`${key}-${item.label}`} className="hover:bg-neutral-50">
+                          <tr
+                            key={`${key}-${item.label}`}
+                            className="odd:bg-white even:bg-[#F5F7FA] hover:bg-neutral-50"
+                          >
                             <td className="px-2 py-1.5 text-neutral-700">{item.label}</td>
                             <td className="px-2 py-1.5 text-right font-medium text-neutral-900">
                               {item.currency ? `¥${formatMetric(item.value)}` : formatMetric(item.value)}
@@ -147,7 +150,7 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
               key={label}
               className="bg-white px-4 py-3 shadow-sm"
             >
-              <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
+              <h2 className="text-sm font-bold text-neutral-600">{label}</h2>
               <p className="mt-2 text-2xl font-semibold">
                 {formatMetric(value, format)}
               </p>
@@ -173,7 +176,7 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
               key={label}
               className="bg-white px-4 py-3 shadow-sm"
             >
-              <h2 className="text-xs font-medium text-neutral-500">{label}</h2>
+              <h2 className="text-sm font-bold text-neutral-600">{label}</h2>
               <p className="mt-2 text-2xl font-semibold">
                 {formatMetric(value, format)}
               </p>
@@ -190,7 +193,7 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
       {hideTable ? null : (
         <section className="overflow-x-auto bg-white shadow-sm">
           <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
-            <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-wider text-neutral-500 sm:text-xs">
+            <thead className="bg-[#3F3F3F] text-left text-[11px] uppercase tracking-wider text-white sm:text-xs">
               <tr>
                 <th className="px-4 py-3">日付</th>
                 <th className="px-4 py-3">広告費</th>
@@ -209,9 +212,9 @@ export function MetricsPanel({ metrics, breakdowns, hideTable }: MetricsPanelPro
                 {showPerformanceFee ? <th className="px-4 py-3">成果報酬費</th> : null}
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-neutral-100 bg-white">
               {metrics.map((row) => (
-                <tr key={row.date} className="whitespace-nowrap">
+                <tr key={row.date} className="whitespace-nowrap odd:bg-white even:bg-[#F5F7FA]">
                   <td className="px-4 py-3 text-neutral-700">{row.date}</td>
                   <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualAdCost)}</td>
                   <td className="px-4 py-3 text-neutral-900">{formatMetric(row.impressions)}</td>

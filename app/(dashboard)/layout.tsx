@@ -10,15 +10,15 @@ type NavigationItem = {
 };
 
 const adminNavigation: NavigationItem[] = [
-  { href: "/projects", label: "Projects", icon: "FolderKanban" },
-  { href: "/sections", label: "Sections", icon: "Layout" },
-  { href: "/platforms", label: "Platforms", icon: "Monitor" },
+  { href: "/projects", label: "Projects", icon: "Project" },
+  { href: "/sections", label: "Sections", icon: "Section" },
+  { href: "/platforms", label: "Platforms", icon: "Platform" },
   { href: "/agents", label: "Agents", icon: "Building2" },
   { href: "/data-updates", label: "Updates", icon: "RefreshCw" },
   { href: "/settings", label: "Settings", icon: "Settings" },
 ];
 const agentNavigation: NavigationItem[] = [
-  { href: "/sections", label: "Sections", icon: "Layout" },
+  { href: "/sections", label: "Sections", icon: "Section" },
 ];
 
 interface DashboardLayoutProps {
@@ -33,8 +33,8 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     <div className="min-h-screen bg-[var(--primary-color)] text-neutral-900">
       <Header userEmail={user.email} userRole={user.role} />
       <div className="flex w-full flex-col lg:flex-row">
-        <aside className="w-full shrink-0 bg-[var(--accent-color-500)] px-2 py-4 sm:px-3 sm:py-6 lg:w-28">
-          <nav className="flex flex-wrap justify-center gap-2 lg:flex-col lg:items-stretch lg:justify-start">
+        <aside className="w-full shrink-0 bg-[var(--accent-color-500)] lg:w-28">
+          <nav className="flex flex-wrap justify-center lg:flex-col lg:items-stretch lg:justify-start">
             {navigation.map((item) => (
               <NavLink key={item.href} href={item.href} icon={item.icon}>
                 {item.label}

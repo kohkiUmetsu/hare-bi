@@ -37,7 +37,7 @@ export function ProjectTable({ rows }: ProjectTableProps) {
   return (
     <div className="overflow-hidden border border-neutral-200 bg-white shadow-sm">
       <table className="min-w-full divide-y divide-neutral-200 text-sm">
-        <thead className="bg-neutral-50 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+        <thead className="bg-[#3F3F3F] text-xs font-semibold uppercase tracking-wider text-white">
           <tr>
             <th className="px-4 py-3 text-left">プロジェクト名</th>
             <th className="px-4 py-3 text-left">セクション</th>
@@ -49,7 +49,7 @@ export function ProjectTable({ rows }: ProjectTableProps) {
             <th className="px-4 py-3 text-left">操作</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-neutral-200">
+        <tbody className="divide-y divide-neutral-200 bg-white">
           {!hasRows && (
             <tr>
               <td colSpan={8} className="px-4 py-10 text-center text-sm text-neutral-500">
@@ -60,7 +60,7 @@ export function ProjectTable({ rows }: ProjectTableProps) {
           {rows.map((row) => (
             <tr
               key={row.project_name}
-              className="cursor-pointer bg-white transition hover:bg-neutral-50"
+              className="cursor-pointer transition odd:bg-white even:bg-[#F5F7FA] hover:bg-neutral-50"
               onClick={() => router.push(`/settings/projects/${encodeURIComponent(row.project_name)}`)}
             >
               <td className="px-4 py-3 text-base font-medium text-neutral-900">{row.project_name}</td>

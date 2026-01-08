@@ -67,12 +67,18 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold">プロジェクト指標</h1>
-        <p className="text-sm text-neutral-500">
-          プロジェクトと期間を選択して、dailyレコードに基づく主要指標を表示します。
-        </p>
+      <header className="flex items-center gap-4">
+        <h1 className="text-4xl font-bold text-[var(--accent-color)] tracking-wide">PROJECT</h1>
+        <button type="button" className="text-4xl text-[var(--accent-color)] hover:opacity-80 leading-none flex items-center">
+          ‹
+        </button>
+        <button type="button" className="text-4xl text-[var(--accent-color)] hover:opacity-80 leading-none flex items-center">
+          ›
+        </button>
       </header>
+      <p className="text-sm text-neutral-700">
+        プロジェクトと期間を選択して、dailyレコードに基づく主要指標を表示します。
+      </p>
 
       <ProjectFilterForm
         projects={projects}
@@ -84,14 +90,6 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
       {loadError ? (
         <section className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {loadError}
-        </section>
-      ) : null}
-
-      {!loadError && !selectedProjectId ? (
-        <section className="border border-dashed border-neutral-300 bg-white px-4 py-6 text-sm text-neutral-500">
-          {projects.length === 0
-            ? 'プロジェクトが存在しません。BigQueryにデータを追加してから再度アクセスしてください。'
-            : 'プロジェクトを選択し、「表示」を押してください。'}
         </section>
       ) : null}
 

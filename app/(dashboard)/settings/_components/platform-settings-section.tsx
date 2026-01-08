@@ -309,7 +309,7 @@ export function PlatformSettingsSection({
               <button
                 type="button"
                 onClick={handleAddFee}
-                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700"
+                className="rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
               >
                 追加
               </button>
@@ -395,7 +395,7 @@ export function PlatformSettingsSection({
               <button
                 type="button"
                 onClick={handleAddMspLinkPrefix}
-                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700"
+                className="rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
               >
                 追加
               </button>
@@ -435,7 +435,7 @@ export function PlatformSettingsSection({
             )}
             <button
               type="submit"
-              className="flex-1 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700"
+              className="flex-1 rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
             >
               {editingPlatform ? '媒体設定を更新' : '媒体設定を追加'}
             </button>

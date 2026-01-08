@@ -16,8 +16,8 @@ export function MetricMiniChart({ data, variant, index }: MetricMiniChartProps) 
           <AreaChart data={data}>
             <defs>
               <linearGradient id={`gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--accent-color)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--accent-color)" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--chart-line-color)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--chart-line-color)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
@@ -42,11 +42,11 @@ export function MetricMiniChart({ data, variant, index }: MetricMiniChartProps) 
             <Area
               type="linear"
               dataKey="value"
-              stroke="var(--accent-color)"
+              stroke="var(--chart-line-color)"
               fill={`url(#gradient-${index})`}
               strokeWidth={1.5}
               isAnimationActive={false}
-              dot={false}
+              dot={{ r: 3, fill: "var(--chart-line-color)", strokeWidth: 0 }}
             />
           </AreaChart>
         ) : (
@@ -73,10 +73,10 @@ export function MetricMiniChart({ data, variant, index }: MetricMiniChartProps) 
             <Line
               type="linear"
               dataKey="value"
-              stroke="var(--accent-color)"
+              stroke="var(--chart-line-color)"
               strokeWidth={1.5}
               isAnimationActive={false}
-              dot={false}
+              dot={{ r: 3, fill: "var(--chart-line-color)", strokeWidth: 0 }}
             />
           </LineChart>
         )}

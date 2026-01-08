@@ -51,7 +51,7 @@ export default async function SettingsPage() {
           </Link>
           <Link
             href="/settings/accounts"
-            className="inline-flex items-center bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"
+            className="inline-flex items-center bg-[var(--accent-color)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
           >
             媒体アカウントを登録
           </Link>
