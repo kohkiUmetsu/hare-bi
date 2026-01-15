@@ -1,15 +1,23 @@
+import Image from "next/image";
 import { MetricsPanel } from "../_components/metrics-panel";
 import { ProjectFilterForm } from "./project-filter-form";
 import {
+  buildMetricSummary,
+  calculatePreviousPeriod,
   fetchProjectDailyMetrics,
   fetchProjectSectionBreakdown,
+  fetchProjectSectionDailyBreakdown,
   listProjects,
   type DailyMetricRow,
   type MetricBreakdownRow,
+  type MetricSummary,
   type ProjectOption,
+  type TrendBreakdownSeries,
 } from "@/lib/metrics";
 import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
 import { requireAdmin } from "@/lib/auth-server";
+import { buildProjectIconUrl } from "@/lib/project-assets";
+import { getProjectAppearanceByName } from "@/lib/settings";
 
 interface ProjectsPageProps {
   searchParams?: {
@@ -43,23 +51,67 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
   let metrics: DailyMetricRow[] = [];
   let loadError: string | null = null;
   let sectionBreakdown: MetricBreakdownRow[] = [];
+  let previousPeriodSummary: MetricSummary | null = null;
+  let breakdownSeries: TrendBreakdownSeries[] = [];
+  let panelBorderColor: string | null = null;
+  let projectIconUrl: string | null = null;
 
   try {
     projects = await listProjects();
     selectedProjectId = resolveProjectId(searchParams?.projectId, projects);
     selectedProjectName = projects.find((project) => project.id === selectedProjectId)?.name ?? null;
 
+    if (selectedProjectName) {
+      try {
+        const projectAppearance = await getProjectAppearanceByName(selectedProjectName);
+        panelBorderColor = projectAppearance.project_color ?? 'var(--accent-color)';
+        projectIconUrl = buildProjectIconUrl(projectAppearance.project_icon_path);
+      } catch {
+        panelBorderColor = 'var(--accent-color)';
+        projectIconUrl = null;
+      }
+    }
+
     if (selectedProjectId) {
-      const [metricsResult, breakdownResult] = await Promise.all([
+      const previousPeriod = calculatePreviousPeriod(startDate, endDate);
+
+      const [
+        metricsResult,
+        breakdownResult,
+        breakdownTrend,
+        previousMetrics,
+        previousBreakdown,
+      ] = await Promise.all([
         fetchProjectDailyMetrics({
           entityId: selectedProjectId,
           startDate,
           endDate,
         }),
         fetchProjectSectionBreakdown({ projectId: selectedProjectId, startDate, endDate }),
+        fetchProjectSectionDailyBreakdown({ projectId: selectedProjectId, startDate, endDate }),
+        fetchProjectDailyMetrics({
+          entityId: selectedProjectId,
+          startDate: previousPeriod.startDate,
+          endDate: previousPeriod.endDate,
+        }),
+        fetchProjectSectionBreakdown({
+          projectId: selectedProjectId,
+          startDate: previousPeriod.startDate,
+          endDate: previousPeriod.endDate,
+        }),
       ]);
       metrics = metricsResult;
-      sectionBreakdown = breakdownResult;
+      breakdownSeries = breakdownTrend;
+      sectionBreakdown = breakdownResult.map((item) => {
+        const prevItem = previousBreakdown.find((prev) => prev.id === item.id);
+        return {
+          ...item,
+          previousActualAdCost: prevItem?.actualAdCost,
+          previousTotalMspCv: prevItem?.totalMspCv,
+          previousTotalActualCv: prevItem?.totalActualCv,
+        };
+      });
+      previousPeriodSummary = previousMetrics.length > 0 ? buildMetricSummary(previousMetrics) : null;
     }
   } catch (error) {
     loadError = error instanceof Error ? error.message : "BigQueryからの取得に失敗しました。";
@@ -80,12 +132,30 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         プロジェクトと期間を選択して、dailyレコードに基づく主要指標を表示します。
       </p>
 
-      <ProjectFilterForm
-        projects={projects}
-        selectedProjectId={selectedProjectId}
-        startDate={startDate}
-        endDate={endDate}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex items-center justify-center">
+          <div className="w-full">
+            <ProjectFilterForm
+              projects={projects}
+              selectedProjectId={selectedProjectId}
+              startDate={startDate}
+              endDate={endDate}
+              panelBorderColor={panelBorderColor}
+            />
+          </div>
+        </div>
+        {projectIconUrl ? (
+          <div className="flex items-center justify-center">
+            <Image
+              src={projectIconUrl}
+              alt="Project icon"
+              width={200}
+              height={200}
+              className="h-32 w-32 lg:h-48 lg:w-48 object-contain"
+            />
+          </div>
+        ) : null}
+      </div>
 
       {loadError ? (
         <section className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -102,21 +172,27 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
           ) : null}
           <MetricsPanel
             metrics={metrics}
+            previousPeriodSummary={previousPeriodSummary}
+            trendBreakdownSeries={breakdownSeries}
+            panelBorderColor={panelBorderColor}
             breakdowns={
               sectionBreakdown.length
                 ? {
                     actualAdCost: sectionBreakdown.map((item) => ({
                       label: item.label,
                       value: item.actualAdCost,
+                      previousValue: (item as typeof item & { previousActualAdCost?: number }).previousActualAdCost,
                       currency: true,
                     })),
                     mspCv: sectionBreakdown.map((item) => ({
                       label: item.label,
                       value: item.totalMspCv,
+                      previousValue: (item as typeof item & { previousTotalMspCv?: number }).previousTotalMspCv,
                     })),
                     actualCv: sectionBreakdown.map((item) => ({
                       label: item.label,
                       value: item.totalActualCv,
+                      previousValue: (item as typeof item & { previousTotalActualCv?: number }).previousTotalActualCv,
                     })),
                   }
                 : undefined

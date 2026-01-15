@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import Image from "next/image";
 import { Building2, RefreshCw, Settings } from "lucide-react";
 
@@ -21,9 +21,10 @@ interface NavLinkProps {
   href: string;
   children: ReactNode;
   icon?: NavLinkIcon;
+  navToggleId?: string;
 }
 
-export function NavLink({ href, children, icon }: NavLinkProps) {
+export function NavLink({ href, children, icon, navToggleId }: NavLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href || pathname.startsWith(`${href}/`);
 
@@ -36,11 +37,30 @@ export function NavLink({ href, children, icon }: NavLinkProps) {
   const activeClasses = "bg-[var(--accent-color-400)] text-white shadow-sm";
   const inactiveClasses = "text-white/80 hover:bg-white/10 hover:text-white px-2";
 
+  useEffect(() => {
+    if (!navToggleId) {
+      return;
+    }
+    const toggle = document.getElementById(navToggleId) as HTMLInputElement | null;
+    if (toggle?.checked) {
+      toggle.checked = false;
+    }
+  }, [pathname, navToggleId]);
+
   return (
     <Link
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+      onClick={() => {
+        if (!navToggleId) {
+          return;
+        }
+        const toggle = document.getElementById(navToggleId) as HTMLInputElement | null;
+        if (toggle?.checked) {
+          toggle.checked = false;
+        }
+      }}
     >
       {isSvgIcon && iconValue && (
         <Image src={iconValue} alt={children as string} width={24} height={24} />

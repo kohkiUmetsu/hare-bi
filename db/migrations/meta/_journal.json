@@ -36,6 +36,13 @@
       "when": 1766427098105,
       "tag": "0004_fearless_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1768459004088,
+      "tag": "0005_harsh_prodigy",
+      "breakpoints": true
     }
   ]
 }

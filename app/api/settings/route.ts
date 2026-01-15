@@ -39,6 +39,8 @@ type ApiProject = {
   total_report_type: 'budget' | 'performance';
   total_performance_agency_unit_price: number | null;
   total_performance_internal_unit_price: number | null;
+  project_color: string | null;
+  project_icon_path: string | null;
 };
 
 type ApiSection = {
@@ -171,6 +173,8 @@ function buildApiResponse(settings: ReportSettings): ApiReportSettings {
       total_report_type: project.total_report_type,
       total_performance_agency_unit_price: project.performance_unit_price,
       total_performance_internal_unit_price: project.performance_unit_price, // 同じ値を使用
+      project_color: project.project_color ?? null,
+      project_icon_path: project.project_icon_path ?? null,
     };
   });
 

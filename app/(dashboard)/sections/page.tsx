@@ -1,16 +1,26 @@
+import Image from "next/image";
 import { MetricsPanel } from "../_components/metrics-panel";
 import { SectionFilterForm } from "./section-filter-form";
 import {
+  buildMetricSummary,
+  calculatePreviousPeriod,
   fetchSectionDailyMetrics,
   fetchSectionPlatformBreakdown,
+  fetchSectionPlatformDailyBreakdown,
+  fetchSectionPlatformDetailedMetrics,
   listSections,
   type DailyMetricRow,
   type MetricBreakdownRow,
+  type MetricSummary,
+  type PlatformDetailedMetrics,
   type SectionOption,
+  type TrendBreakdownSeries,
 } from "@/lib/metrics";
 import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
 import { requireAuth } from "@/lib/auth-server";
 import { toProjectKey } from "@/lib/filter-options";
+import { buildProjectIconUrl } from "@/lib/project-assets";
+import { getProjectAppearanceByName } from "@/lib/settings";
 
 interface SectionsPageProps {
   searchParams?: {
@@ -79,6 +89,11 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
   let metrics: DailyMetricRow[] = [];
   let loadError: string | null = null;
   let platformBreakdown: MetricBreakdownRow[] = [];
+  let platformDetailedMetrics: PlatformDetailedMetrics[] = [];
+  let previousPeriodSummary: MetricSummary | null = null;
+  let breakdownSeries: TrendBreakdownSeries[] = [];
+  let panelBorderColor: string | null = null;
+  let projectIconUrl: string | null = null;
 
   try {
     sections = await listSections();
@@ -91,6 +106,20 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
     }
     projectOptions = buildProjectOptions(sections);
     selectedProjectId = resolveProjectId(searchParams?.projectId, projectOptions);
+    if (selectedProjectId) {
+      const selectedProjectName =
+        projectOptions.find((option) => option.id === selectedProjectId)?.label ?? null;
+      if (selectedProjectName) {
+        try {
+          const projectAppearance = await getProjectAppearanceByName(selectedProjectName);
+          panelBorderColor = projectAppearance.project_color ?? 'var(--accent-color)';
+          projectIconUrl = buildProjectIconUrl(projectAppearance.project_icon_path);
+        } catch {
+          panelBorderColor = 'var(--accent-color)';
+          projectIconUrl = null;
+        }
+      }
+    }
     sectionsForProject = selectedProjectId
       ? sections.filter((section) => toProjectKey(section.projectId) === selectedProjectId)
       : [];
@@ -98,7 +127,16 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
     selectedSection = sectionsForProject.find((section) => section.id === selectedSectionId) ?? null;
 
     if (selectedSectionId) {
-      const [metricsResult, breakdownResult] = await Promise.all([
+      const previousPeriod = calculatePreviousPeriod(startDate, endDate);
+
+      const [
+        metricsResult,
+        breakdownResult,
+        detailedMetrics,
+        breakdownTrend,
+        previousMetrics,
+        previousBreakdown,
+      ] = await Promise.all([
         fetchSectionDailyMetrics({
           entityId: selectedSectionId,
           startDate,
@@ -109,9 +147,40 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
           startDate,
           endDate,
         }),
+        fetchSectionPlatformDetailedMetrics({
+          sectionId: selectedSectionId,
+          startDate,
+          endDate,
+        }),
+        fetchSectionPlatformDailyBreakdown({
+          sectionId: selectedSectionId,
+          startDate,
+          endDate,
+        }),
+        fetchSectionDailyMetrics({
+          entityId: selectedSectionId,
+          startDate: previousPeriod.startDate,
+          endDate: previousPeriod.endDate,
+        }),
+        fetchSectionPlatformBreakdown({
+          sectionId: selectedSectionId,
+          startDate: previousPeriod.startDate,
+          endDate: previousPeriod.endDate,
+        }),
       ]);
       metrics = metricsResult;
-      platformBreakdown = breakdownResult;
+      platformDetailedMetrics = detailedMetrics;
+      breakdownSeries = breakdownTrend;
+      platformBreakdown = breakdownResult.map((item) => {
+        const prevItem = previousBreakdown.find((prev) => prev.id === item.id);
+        return {
+          ...item,
+          previousActualAdCost: prevItem?.actualAdCost,
+          previousTotalMspCv: prevItem?.totalMspCv,
+          previousTotalActualCv: prevItem?.totalActualCv,
+        };
+      });
+      previousPeriodSummary = previousMetrics.length > 0 ? buildMetricSummary(previousMetrics) : null;
     }
   } catch (error) {
     loadError = error instanceof Error ? error.message : "BigQueryからの取得に失敗しました。";
@@ -132,14 +201,32 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
         セクションごとのdailyレコードを集計し、主要指標を確認します。
       </p>
 
-      <SectionFilterForm
-        projectOptions={projectOptions}
-        sections={sections}
-        selectedProjectId={selectedProjectId}
-        selectedSectionId={selectedSectionId}
-        startDate={startDate}
-        endDate={endDate}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex items-center justify-center">
+          <div className="w-full">
+            <SectionFilterForm
+              projectOptions={projectOptions}
+              sections={sections}
+              selectedProjectId={selectedProjectId}
+              selectedSectionId={selectedSectionId}
+              startDate={startDate}
+              endDate={endDate}
+              panelBorderColor={panelBorderColor}
+            />
+          </div>
+        </div>
+        {projectIconUrl ? (
+          <div className="flex items-center justify-center">
+            <Image
+              src={projectIconUrl}
+              alt="Project icon"
+              width={200}
+              height={200}
+              className="h-32 w-32 lg:h-48 lg:w-48 object-contain"
+            />
+          </div>
+        ) : null}
+      </div>
 
       {loadError ? (
         <section className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -157,21 +244,29 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
           ) : null}
           <MetricsPanel
             metrics={metrics}
+            previousPeriodSummary={previousPeriodSummary}
+            layout="section-platform"
+            platformDetailedMetrics={platformDetailedMetrics}
+            trendBreakdownSeries={breakdownSeries}
+            panelBorderColor={panelBorderColor}
             breakdowns={
               platformBreakdown.length
                 ? {
                     actualAdCost: platformBreakdown.map((item) => ({
                       label: item.label,
                       value: item.actualAdCost,
+                      previousValue: (item as typeof item & { previousActualAdCost?: number }).previousActualAdCost,
                       currency: true,
                     })),
                     mspCv: platformBreakdown.map((item) => ({
                       label: item.label,
                       value: item.totalMspCv,
+                      previousValue: (item as typeof item & { previousTotalMspCv?: number }).previousTotalMspCv,
                     })),
                     actualCv: platformBreakdown.map((item) => ({
                       label: item.label,
                       value: item.totalActualCv,
+                      previousValue: (item as typeof item & { previousTotalActualCv?: number }).previousTotalActualCv,
                     })),
                   }
                 : undefined

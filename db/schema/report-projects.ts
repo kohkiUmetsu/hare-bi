@@ -28,6 +28,8 @@ export const reportProjectsTable = pgTable(
     project_name: text('project_name').notNull(),
     total_report_type: projectReportTypeEnum('total_report_type').notNull().default('budget'),
     performance_unit_price: doublePrecision('performance_unit_price'),
+    project_color: text('project_color').default('#2A9CFF'),
+    project_icon_path: text('project_icon_path'),
     created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },

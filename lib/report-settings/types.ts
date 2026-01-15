@@ -3,6 +3,8 @@ export type ProjectSetting = {
   display_name: string;
   total_report_type: 'budget' | 'performance';
   performance_unit_price: number | null;
+  project_color?: string | null;
+  project_icon_path?: string | null;
   msp_advertiser_ids: string[];
   meta_account_ids: string[];
   tiktok_advertiser_ids: string[];

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import {
   Area,
   AreaChart,
@@ -7,12 +8,13 @@ import {
   CartesianGrid,
   ComposedChart,
   Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
-import type { DailyMetricRow } from '@/lib/metrics';
+import type { DailyMetricRow, TrendBreakdownSeries } from '@/lib/metrics';
 import { formatDate, formatMetric } from '@/lib/format';
 
 function formatInteger(value: number | null | undefined): string {
@@ -24,6 +26,8 @@ function formatInteger(value: number | null | undefined): string {
 
 interface MetricsTrendChartsProps {
   metrics: DailyMetricRow[];
+  trendBreakdownSeries?: TrendBreakdownSeries[];
+  panelBorderColor?: string | null;
 }
 
 function parseDate(value: string): Date {
@@ -38,15 +42,53 @@ function formatShortLabel(value: string) {
   return `${month}/${day}`;
 }
 
-export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps) {
+const SERIES_COLORS = [
+  '#2A9CFF',
+  '#00B900',
+  '#FF8C00',
+  '#E14A4A',
+  '#008080',
+  '#8B5E3C',
+];
+
+export default function MetricsTrendCharts({
+  metrics,
+  trendBreakdownSeries,
+  panelBorderColor,
+}: MetricsTrendChartsProps) {
+  const panelStyle = panelBorderColor
+    ? { borderColor: panelBorderColor, borderWidth: 6, borderStyle: 'solid' }
+    : undefined;
+  const activeSeries = (trendBreakdownSeries ?? []).filter((series) => series.points.length > 0);
+  const seriesMeta = activeSeries.map((series, index) => ({
+    ...series,
+    key: `series_${index}`,
+    color: SERIES_COLORS[index % SERIES_COLORS.length],
+    pointMap: new Map(series.points.map((point) => [point.date, point])),
+  }));
+  const hasBreakdown = seriesMeta.length > 0;
+
+  const cvTotalsByDate = new Map<string, number>();
+  let breakdownMaxCpa = 0;
+
+  seriesMeta.forEach((series) => {
+    series.points.forEach((point) => {
+      cvTotalsByDate.set(point.date, (cvTotalsByDate.get(point.date) ?? 0) + point.mspCv);
+      breakdownMaxCpa = Math.max(breakdownMaxCpa, point.cpa);
+    });
+  });
+
+  const breakdownMaxCv = Math.max(0, ...Array.from(cvTotalsByDate.values()));
   const maxMspCv = metrics.reduce((acc, row) => Math.max(acc, row.mspCv ?? 0), 0);
   const maxCpa = metrics.reduce((acc, row) => Math.max(acc, row.cpa ?? 0), 0);
-  const mspCvScaleFactor = (() => {
-    if (maxMspCv === 0) {
+  const cvScaleFactor = (() => {
+    const cvMax = hasBreakdown ? breakdownMaxCv : maxMspCv;
+    const cpaMax = hasBreakdown ? breakdownMaxCpa : maxCpa;
+    if (cvMax === 0) {
       return 1;
     }
 
-    const base = maxCpa > 0 ? maxMspCv / maxCpa : maxMspCv;
+    const base = cpaMax > 0 ? cvMax / cpaMax : cvMax;
     return Math.max(1, Math.ceil(base * 2));
   })();
   const chartMetrics = metrics.map((row) => ({
@@ -66,18 +108,36 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
     mCv: row.mCv ?? 0,
     platformCv: row.platformCv ?? 0,
     performanceBasedFee: row.performanceBasedFee ?? 0,
-    mspCvScaled: row.mspCv ? row.mspCv / mspCvScaleFactor : 0,
+    mspCvScaled: row.mspCv ? row.mspCv / cvScaleFactor : 0,
   }));
+  const breakdownChartData = hasBreakdown
+    ? metrics.map((row) => {
+        const entry: Record<string, number | string> = { date: row.date };
+        seriesMeta.forEach((series) => {
+          const point = series.pointMap.get(row.date);
+          entry[`cv_${series.key}`] = point ? point.mspCv / cvScaleFactor : 0;
+          entry[`cpa_${series.key}`] = point?.cpa ?? 0;
+          entry[`ad_${series.key}`] = point?.actualAdCost ?? 0;
+        });
+        return entry;
+      })
+    : [];
 
   if (!metrics.length) {
     return (
       <>
-        <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm">
-          <h2 className="text-lg font-bold text-neutral-700">CV件数 / CPA 推移</h2>
+        <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm" style={panelStyle}>
+          <h2 className="flex items-center gap-2 text-xl font-bold text-black">
+            <Image src="/icons/fire.svg" alt="" width={16} height={16} />
+            CV件数 / CPA 推移
+          </h2>
           <p className="mt-4 text-sm text-neutral-500">表示するデータがありません。</p>
         </article>
-        <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm">
-          <h2 className="text-lg font-bold text-neutral-700">実広告費 推移</h2>
+        <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm" style={panelStyle}>
+          <h2 className="flex items-center gap-2 text-xl font-bold text-black">
+            <Image src="/icons/yen.svg" alt="" width={16} height={16} />
+            実広告費 推移
+          </h2>
           <p className="mt-4 text-sm text-neutral-500">表示するデータがありません。</p>
         </article>
       </>
@@ -86,11 +146,17 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
 
   return (
     <>
-      <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm">
-        <h2 className="text-lg font-bold text-neutral-700">CV件数 / CPA 推移</h2>
+      <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm" style={panelStyle}>
+        <h2 className="flex items-center gap-2 text-xl font-bold text-black">
+          <Image src="/icons/fire.svg" alt="" width={16} height={16} />
+          CV件数 / CPA 推移
+        </h2>
         <div className="mt-4 h-64">
           <ResponsiveContainer>
-            <ComposedChart data={chartMetrics} margin={{ top: 10, right: 30, bottom: 0, left: 0 }}>
+            <ComposedChart
+              data={hasBreakdown ? breakdownChartData : chartMetrics}
+              margin={{ top: 10, right: 30, bottom: 0, left: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="date"
@@ -108,47 +174,139 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tickFormatter={(value) => formatInteger((value ?? 0) * mspCvScaleFactor)}
+                tickFormatter={(value) => formatInteger((value ?? 0) * cvScaleFactor)}
                 tick={{ fontSize: 10 }}
                 width={60}
               />
               <Tooltip
-                formatter={(value: number, name: string) =>
-                  name === 'CPA'
-                    ? `${formatInteger(value as number)}`
-                    : `${formatInteger((value as number) * mspCvScaleFactor)}`
-                }
+                position={{ x: 0, y: 0 }}
+                wrapperStyle={{
+                  top: 0,
+                  right: 0,
+                  left: "auto",
+                }}
+                formatter={(value: number, name: string) => {
+                  if (name.includes('CPA')) {
+                    return `${formatInteger(value as number)}`;
+                  }
+                  if (name.includes('CV件数')) {
+                    return `${formatInteger((value as number) * cvScaleFactor)}`;
+                  }
+                  return `${formatInteger(value as number)}`;
+                }}
                 labelFormatter={(value) => formatDate(value)}
               />
-              <Line
-                yAxisId="left"
-                type="linear"
-                dataKey="cpa"
-                name="CPA"
-                stroke="var(--chart-line-color)"
-                strokeWidth={2}
-                dot={{ r: 4, fill: "var(--chart-line-color)", strokeWidth: 0 }}
-                isAnimationActive={false}
-              />
-              <Bar
-                yAxisId="right"
-                dataKey="mspCvScaled"
-                name="MSP CV件数"
-                fill="var(--accent-color-alt)"
-                radius={[4, 4, 0, 0]}
-                barSize={16}
-                isAnimationActive={false}
-              />
+              {hasBreakdown ? (
+                <>
+                  {seriesMeta.map((series) => (
+                    <Line
+                      key={series.id}
+                      yAxisId="left"
+                      type="linear"
+                      dataKey={`cpa_${series.key}`}
+                      name={`${series.label} CPA`}
+                      stroke={series.color}
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: series.color, strokeWidth: 0 }}
+                      isAnimationActive={false}
+                    />
+                  ))}
+                  {seriesMeta.map((series) => (
+                    <Bar
+                      key={`${series.id}-cv`}
+                      yAxisId="right"
+                      dataKey={`cv_${series.key}`}
+                      name={`${series.label} CV件数`}
+                      fill={series.color}
+                      barSize={16}
+                      isAnimationActive={false}
+                    />
+                  ))}
+                </>
+              ) : (
+                <>
+                  <Line
+                    yAxisId="left"
+                    type="linear"
+                    dataKey="cpa"
+                    name="CPA"
+                    stroke="var(--chart-line-color)"
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: "var(--chart-line-color)", strokeWidth: 0 }}
+                    isAnimationActive={false}
+                  />
+                  <Bar
+                    yAxisId="right"
+                    dataKey="mspCvScaled"
+                    name="MSP CV件数"
+                    fill="var(--accent-color-alt)"
+                    radius={[4, 4, 0, 0]}
+                    barSize={16}
+                    isAnimationActive={false}
+                  />
+                </>
+              )}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
+        {hasBreakdown ? (
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-neutral-600">
+            {seriesMeta.map((series) => (
+              <span key={series.id} className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2" style={{ backgroundColor: series.color }} />
+                {series.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </article>
 
-      <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm">
-        <h2 className="text-lg font-bold text-neutral-700">実広告費 推移</h2>
+      <article className="border border-neutral-200 bg-white px-4 py-4 shadow-sm" style={panelStyle}>
+        <h2 className="flex items-center gap-2 text-xl font-bold text-black">
+          <Image src="/icons/yen.svg" alt="" width={16} height={16} />
+          実広告費 推移
+        </h2>
         <div className="mt-4 h-64">
           <ResponsiveContainer>
-            <AreaChart data={metrics} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
+            {hasBreakdown ? (
+              <LineChart data={breakdownChartData} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatShortLabel}
+                  minTickGap={30}
+                  tick={{ fontSize: 10 }}
+                />
+                <YAxis
+                  tickFormatter={(value) => formatInteger(value)}
+                  tick={{ fontSize: 10 }}
+                  width={60}
+                />
+                <Tooltip
+                  position={{ x: 0, y: 0 }}
+                  wrapperStyle={{
+                    top: 0,
+                    right: 0,
+                    left: "auto",
+                  }}
+                  formatter={(value: number) => `¥${formatMetric(value as number)}`}
+                  labelFormatter={(value) => formatDate(value)}
+                />
+                {seriesMeta.map((series) => (
+                  <Line
+                    key={series.id}
+                    type="linear"
+                    dataKey={`ad_${series.key}`}
+                    name={`${series.label} 実広告費`}
+                    stroke={series.color}
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: series.color, strokeWidth: 0 }}
+                    isAnimationActive={false}
+                  />
+                ))}
+              </LineChart>
+            ) : (
+              <AreaChart data={metrics} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="adCostGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--chart-line-color)" stopOpacity={0.8} />
@@ -168,6 +326,12 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
                 width={60}
               />
               <Tooltip
+                position={{ x: 0, y: 0 }}
+                wrapperStyle={{
+                  top: 0,
+                  right: 0,
+                  left: "auto",
+                }}
                 formatter={(value: number) => `¥${formatMetric(value as number)}`}
                 labelFormatter={(value) => formatDate(value)}
               />
@@ -181,9 +345,20 @@ export default function MetricsTrendCharts({ metrics }: MetricsTrendChartsProps)
                 dot={{ r: 4, fill: "var(--chart-line-color)", strokeWidth: 0 }}
                 isAnimationActive={false}
               />
-            </AreaChart>
+              </AreaChart>
+            )}
           </ResponsiveContainer>
         </div>
+        {hasBreakdown ? (
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-neutral-600">
+            {seriesMeta.map((series) => (
+              <span key={series.id} className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2" style={{ backgroundColor: series.color }} />
+                {series.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </article>
     </>
   );

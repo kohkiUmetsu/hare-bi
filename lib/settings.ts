@@ -247,6 +247,8 @@ export async function getReportSettings(): Promise<ReportSettings> {
         display_name: project.project_name,
         total_report_type: project.total_report_type ?? 'budget',
         performance_unit_price: project.performance_unit_price ?? null,
+        project_color: project.project_color ?? null,
+        project_icon_path: project.project_icon_path ?? null,
         msp_advertiser_ids: mspIds,
         meta_account_ids: metaIds,
         tiktok_advertiser_ids: tiktokIds,
@@ -355,12 +357,33 @@ export async function getReportSettings(): Promise<ReportSettings> {
   }
 }
 
+export async function getProjectAppearanceByName(projectName: string): Promise<{
+  project_color: string | null;
+  project_icon_path: string | null;
+}> {
+  const [project] = await db
+    .select({
+      project_color: reportProjectsTable.project_color,
+      project_icon_path: reportProjectsTable.project_icon_path,
+    })
+    .from(reportProjectsTable)
+    .where(eq(reportProjectsTable.project_name, projectName))
+    .limit(1);
+
+  return {
+    project_color: project?.project_color ?? null,
+    project_icon_path: project?.project_icon_path ?? null,
+  };
+}
+
 export async function upsertProjectSetting(project: ProjectSetting): Promise<void> {
   const payload: InsertReportProjectRow = {
     id: undefined,
     project_name: project.project_name,
     total_report_type: project.total_report_type,
     performance_unit_price: project.performance_unit_price,
+    project_color: project.project_color ?? null,
+    project_icon_path: project.project_icon_path ?? null,
   };
   const { project_name: _projectName, ...update } = payload;
   void _projectName;

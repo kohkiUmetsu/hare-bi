@@ -22,6 +22,8 @@ import {
   upsertTiktokAccountSetting,
   upsertPlatformSetting,
 } from '@/lib/settings';
+import { buildProjectIconPath, PROJECT_ICON_BUCKET } from '@/lib/project-assets';
+import { getAdminSupabase } from '@/utils/supabase/admin';
 import type {
   GoogleAdsAccountSetting,
   LineAccountSetting,
@@ -61,6 +63,8 @@ function splitListInput(value: FormDataEntryValue | null): string[] {
     .filter(Boolean);
 }
 
+const MAX_ICON_SIZE_BYTES = 1024 * 1024;
+const HEX_COLOR_PATTERN = /^#([0-9a-fA-F]{6})$/;
 
 function readRequiredString(formData: FormData, key: string, label: string): string {
   const value = String(formData.get(key) ?? '').trim();
@@ -74,6 +78,17 @@ function readRequiredString(formData: FormData, key: string, label: string): str
 
 function readOptionalString(formData: FormData, key: string): string {
   return String(formData.get(key) ?? '').trim();
+}
+
+function readOptionalHexColor(formData: FormData, key: string): string | null {
+  const value = String(formData.get(key) ?? '').trim();
+  if (!value) {
+    return null;
+  }
+  if (!HEX_COLOR_PATTERN.test(value)) {
+    throw new Error('カラーは #RRGGBB 形式で入力してください。');
+  }
+  return value;
 }
 
 function readNumber(formData: FormData, key: string, label: string): number {
@@ -113,6 +128,35 @@ export async function upsertProject(
       ? readNumber(formData, 'performance_unit_price', '成果報酬単価')
       : readOptionalNumber(formData, 'performance_unit_price');
 
+    const projectColor = readOptionalHexColor(formData, 'project_color');
+    const existingIconPath = readOptionalString(formData, 'existing_project_icon_path') || null;
+    const iconFile = formData.get('project_icon');
+    let projectIconPath = existingIconPath;
+
+    if (iconFile instanceof File && iconFile.size > 0) {
+      if (!iconFile.type.startsWith('image/')) {
+        throw new Error('アイコン画像は画像ファイルのみアップロードできます。');
+      }
+      if (iconFile.size > MAX_ICON_SIZE_BYTES) {
+        throw new Error('アイコン画像は1MB以内にしてください。');
+      }
+
+      const storagePath = buildProjectIconPath(projectName, iconFile.name || 'icon');
+      const adminClient = getAdminSupabase();
+      const { error } = await adminClient.storage
+        .from(PROJECT_ICON_BUCKET)
+        .upload(storagePath, iconFile, {
+          contentType: iconFile.type,
+          upsert: true,
+        });
+
+      if (error) {
+        throw new Error('アイコン画像のアップロードに失敗しました。');
+      }
+
+      projectIconPath = storagePath;
+    }
+
     // 複数選択された媒体アカウントIDを取得
     const mspAdvertiserIds = formData.getAll('msp_advertiser_ids').map(String);
     const metaAccountIds = formData.getAll('meta_account_ids').map(String);
@@ -125,6 +169,8 @@ export async function upsertProject(
       display_name: projectName,
       total_report_type: totalReportType,
       performance_unit_price: performanceUnitPrice,
+      project_color: projectColor,
+      project_icon_path: projectIconPath,
       msp_advertiser_ids: mspAdvertiserIds,
       meta_account_ids: metaAccountIds,
       tiktok_advertiser_ids: tiktokAdvertiserIds,

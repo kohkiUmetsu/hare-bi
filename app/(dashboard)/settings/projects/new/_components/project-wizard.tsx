@@ -200,7 +200,11 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
           <p className="text-sm text-neutral-500">プロジェクト情報と紐づける媒体アカウントを選択してください。</p>
         </header>
 
-        <form onSubmit={handleProjectSubmit} className="flex flex-col gap-6">
+        <form
+          onSubmit={handleProjectSubmit}
+          className="flex flex-col gap-6"
+          encType="multipart/form-data"
+        >
           {/* 基本情報 */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-neutral-900">基本情報</h3>
@@ -216,6 +220,36 @@ export function ProjectWizard({ settings }: ProjectWizardProps) {
                 className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm"
                 placeholder="例: プロジェクトA"
               />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-neutral-700" htmlFor="project_color">
+                プロジェクトカラー
+              </label>
+              <div className="mt-1 flex items-center gap-3">
+                <input
+                  id="project_color"
+                  name="project_color"
+                  type="color"
+                  defaultValue="#2A9CFF"
+                  className="h-11 w-14 border border-neutral-300 bg-white"
+                />
+                <span className="text-xs text-neutral-500">
+                  検索ボックスとパネル枠の色に使用します。
+                </span>
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-neutral-700" htmlFor="project_icon">
+                アイコン画像 (1MB以内)
+              </label>
+              <input
+                id="project_icon"
+                name="project_icon"
+                type="file"
+                accept="image/*"
+                className="mt-1 w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+              />
+              <input type="hidden" name="existing_project_icon_path" value="" />
             </div>
 
             {/* 運用形態 */}

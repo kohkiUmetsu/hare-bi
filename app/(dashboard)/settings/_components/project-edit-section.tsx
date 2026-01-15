@@ -1,10 +1,12 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useServerActionState } from '@/components/use-server-action-state';
 import type { ProjectSetting, ReportSettings } from '@/lib/report-settings/types';
 import { upsertProject, type SettingsActionState } from '../actions';
 import { FormStateMessage } from './form-state-message';
+import { buildProjectIconUrl } from '@/lib/project-assets';
 
 interface ProjectEditSectionProps {
   project: ProjectSetting;
@@ -19,6 +21,7 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
     { status: null }
   );
   const [reportType, setReportType] = useState<ReportType>(project.total_report_type);
+  const iconUrl = buildProjectIconUrl(project.project_icon_path);
   const handleAction = async (formData: FormData) => {
     await formAction(formData);
   };
@@ -32,7 +35,11 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
         </p>
       </header>
 
-      <form action={handleAction} className="mt-6 flex flex-col gap-6">
+      <form
+        action={handleAction}
+        className="mt-6 flex flex-col gap-6"
+        encType="multipart/form-data"
+      >
         {/* プロジェクト名 (読み取り専用) */}
         <div>
           <label className="text-sm font-medium text-neutral-700" htmlFor="project_name">
@@ -44,6 +51,56 @@ export function ProjectEditSection({ project, settings }: ProjectEditSectionProp
             value={project.project_name}
             readOnly
             className="mt-1 w-full border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-neutral-700" htmlFor="project_color">
+            プロジェクトカラー
+          </label>
+          <div className="mt-1 flex items-center gap-3">
+            <input
+              id="project_color"
+              name="project_color"
+              type="color"
+              defaultValue={project.project_color ?? '#2A9CFF'}
+              className="h-11 w-14 border border-neutral-300 bg-white"
+            />
+            <span className="text-xs text-neutral-500">
+              検索ボックスとパネル枠の色に使用します。
+            </span>
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-neutral-700" htmlFor="project_icon">
+            アイコン画像 (1MB以内)
+          </label>
+          <div className="mt-2 flex flex-wrap items-center gap-4">
+            <input
+              id="project_icon"
+              name="project_icon"
+              type="file"
+              accept="image/*"
+              className="text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+            />
+            {iconUrl ? (
+              <div className="flex items-center gap-2 text-xs text-neutral-600">
+                <span>現在のアイコン</span>
+                <Image
+                  src={iconUrl}
+                  alt={`${project.project_name} icon`}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 object-contain"
+                />
+              </div>
+            ) : (
+              <span className="text-xs text-neutral-500">未設定</span>
+            )}
+          </div>
+          <input
+            type="hidden"
+            name="existing_project_icon_path"
+            value={project.project_icon_path ?? ''}
           />
         </div>
 

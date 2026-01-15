@@ -1,16 +1,22 @@
+import Image from "next/image";
 import { MetricsPanel } from "../_components/metrics-panel";
 import { PlatformFilterForm } from "./platform-filter-form";
 import { PlatformMetricsTable } from "./platform-metrics-table";
 import {
+  buildMetricSummary,
+  calculatePreviousPeriod,
   fetchPlatformDailyMetrics,
   listPlatforms,
   type DailyMetricRow,
+  type MetricSummary,
   type PlatformOption,
 } from "@/lib/metrics";
 import { fetchPlatformActualCvEditMap } from "@/lib/platform-metrics";
 import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
 import { requireAdmin } from "@/lib/auth-server";
 import { toProjectKey } from "@/lib/filter-options";
+import { buildProjectIconUrl } from "@/lib/project-assets";
+import { getProjectAppearanceByName } from "@/lib/settings";
 
 interface PlatformsPageProps {
   searchParams?: {
@@ -128,11 +134,28 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
   let actualCvEdits: Record<string, boolean> = {};
   let loadError: string | null = null;
   let selectedPlatformRelation = "";
+  let previousPeriodSummary: MetricSummary | null = null;
+  let panelBorderColor: string | null = null;
+  let projectIconUrl: string | null = null;
 
   try {
     platforms = await listPlatforms();
     projectOptions = buildProjectOptions(platforms);
     selectedProjectId = resolveProjectId(searchParams?.projectId, projectOptions);
+    if (selectedProjectId) {
+      const selectedProjectName =
+        projectOptions.find((option) => option.id === selectedProjectId)?.label ?? null;
+      if (selectedProjectName) {
+        try {
+          const projectAppearance = await getProjectAppearanceByName(selectedProjectName);
+          panelBorderColor = projectAppearance.project_color ?? 'var(--accent-color)';
+          projectIconUrl = buildProjectIconUrl(projectAppearance.project_icon_path);
+        } catch {
+          panelBorderColor = 'var(--accent-color)';
+          projectIconUrl = null;
+        }
+      }
+    }
     sectionOptions = buildSectionOptions(platforms, selectedProjectId);
     selectedSectionId = resolveSectionFilter(searchParams?.sectionId, sectionOptions);
     filteredPlatforms = selectedSectionId
@@ -142,11 +165,23 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
     selectedPlatform = filteredPlatforms.find((platform) => platform.id === selectedPlatformId) ?? null;
 
     if (selectedPlatformId) {
-      metrics = await fetchPlatformDailyMetrics({
-        entityId: selectedPlatformId,
-        startDate,
-        endDate,
-      });
+      const previousPeriod = calculatePreviousPeriod(startDate, endDate);
+
+      const [metricsResult, previousMetrics] = await Promise.all([
+        fetchPlatformDailyMetrics({
+          entityId: selectedPlatformId,
+          startDate,
+          endDate,
+        }),
+        fetchPlatformDailyMetrics({
+          entityId: selectedPlatformId,
+          startDate: previousPeriod.startDate,
+          endDate: previousPeriod.endDate,
+        }),
+      ]);
+      metrics = metricsResult;
+      previousPeriodSummary = previousMetrics.length > 0 ? buildMetricSummary(previousMetrics) : null;
+
       try {
         actualCvEdits = await fetchPlatformActualCvEditMap({
           platformId: selectedPlatformId,
@@ -183,15 +218,33 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
         プラットフォーム単位のdailyレコードを集計し、成果指標を可視化します。
       </p>
 
-      <PlatformFilterForm
-        projectOptions={projectOptions}
-        platforms={platforms}
-        selectedProjectId={selectedProjectId}
-        selectedSectionId={selectedSectionId}
-        selectedPlatformId={selectedPlatformId}
-        startDate={startDate}
-        endDate={endDate}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex items-center justify-center">
+          <div className="w-full">
+            <PlatformFilterForm
+              projectOptions={projectOptions}
+              platforms={platforms}
+              selectedProjectId={selectedProjectId}
+              selectedSectionId={selectedSectionId}
+              selectedPlatformId={selectedPlatformId}
+              startDate={startDate}
+              endDate={endDate}
+              panelBorderColor={panelBorderColor}
+            />
+          </div>
+        </div>
+        {projectIconUrl ? (
+          <div className="flex items-center justify-center">
+            <Image
+              src={projectIconUrl}
+              alt="Project icon"
+              width={200}
+              height={200}
+              className="h-32 w-32 lg:h-48 lg:w-48 object-contain"
+            />
+          </div>
+        ) : null}
+      </div>
 
       {loadError ? (
         <section className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -210,12 +263,19 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
               ) : null}
             </div>
           ) : null}
-          <MetricsPanel metrics={metrics} hideTable />
+          <MetricsPanel
+            metrics={metrics}
+            previousPeriodSummary={previousPeriodSummary}
+            layout="section-platform"
+            hideTable
+            panelBorderColor={panelBorderColor}
+          />
           {selectedPlatform ? (
             <PlatformMetricsTable
               metrics={metrics}
               platform={selectedPlatform}
               actualCvEdits={actualCvEdits}
+              panelBorderColor={panelBorderColor}
             />
           ) : null}
         </section>

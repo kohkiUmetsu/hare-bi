@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import type { DailyMetricRow, PlatformOption } from '@/lib/metrics';
 import { formatMetric } from '@/lib/format';
@@ -11,6 +12,7 @@ interface PlatformMetricsTableProps {
   metrics: DailyMetricRow[];
   platform: PlatformOption;
   actualCvEdits?: Record<string, boolean>;
+  panelBorderColor?: string | null;
 }
 
 const initialState: PlatformMetricsActionState = { status: null };
@@ -27,6 +29,7 @@ export function PlatformMetricsTable({
   metrics,
   platform,
   actualCvEdits,
+  panelBorderColor,
 }: PlatformMetricsTableProps) {
   const [state, formAction] = useServerActionState<PlatformMetricsActionState>(
     updatePlatformActualCv,
@@ -35,7 +38,6 @@ export function PlatformMetricsTable({
   const [editingRow, setEditingRow] = useState<DailyMetricRow | null>(null);
   const [actualCvInput, setActualCvInput] = useState<string>('0');
   const [requestId, setRequestId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<PlatformMetricsActionState>({ status: null });
   const router = useRouter();
 
@@ -56,7 +58,6 @@ export function PlatformMetricsTable({
   const closeEditor = useCallback(() => {
     setEditingRow(null);
     setRequestId(null);
-    setIsSubmitting(false);
   }, []);
 
   useEffect(() => {
@@ -94,18 +95,13 @@ export function PlatformMetricsTable({
   };
 
   const handleAction = async (formData: FormData) => {
-    if (!editingRow || !requestId) {
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      await formAction(formData);
-    } finally {
-      setIsSubmitting(false);
-    }
+    await formAction(formData);
   };
 
   const clearToast = () => setToast({ status: null });
+  const panelStyle = panelBorderColor
+    ? { borderColor: panelBorderColor, borderWidth: 6, borderStyle: 'solid' }
+    : undefined;
 
   if (!metrics.length) {
     return null;
@@ -136,7 +132,10 @@ export function PlatformMetricsTable({
         各行をクリックすると、対象日の実CVを直接編集できます。
       </p>
 
-      <section className="overflow-x-auto border border-neutral-200 bg-white shadow-sm">
+      <section
+        className="overflow-x-auto border border-neutral-200 bg-white shadow-sm"
+        style={panelStyle}
+      >
         <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
           <thead className="bg-[#3F3F3F] text-left text-[11px] uppercase tracking-wider text-white sm:text-xs">
             <tr>
@@ -178,7 +177,9 @@ export function PlatformMetricsTable({
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mspCv)}</td>
                 <td
                   className={`px-4 py-3 ${
-                    actualCvEdits?.[row.date] ? 'text-amber-600' : 'text-neutral-900'
+                    actualCvEdits?.[row.date]
+                      ? 'font-bold text-[#FF6B00]'
+                      : 'text-neutral-900'
                   }`}
                 >
                   {formatMetric(row.actualCv)}
@@ -303,27 +304,51 @@ export function PlatformMetricsTable({
                 </p>
               ) : null}
 
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
-                  onClick={closeEditor}
-                  disabled={isSubmitting}
-                >
-                  キャンセル
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!isActualCvValid || !hasChanges || isSubmitting}
-                >
-                  {isSubmitting ? '保存中...' : '保存'}
-                </button>
-              </div>
+              <EditorActions
+                canSubmit={isActualCvValid && hasChanges}
+                onCancel={closeEditor}
+              />
             </form>
           </div>
         </div>
       ) : null}
     </section>
+  );
+}
+
+function EditorActions({
+  canSubmit,
+  onCancel,
+}: {
+  canSubmit: boolean;
+  onCancel: () => void;
+}) {
+  const { pending } = useFormStatus();
+
+  return (
+    <div className="flex justify-end gap-2">
+      <button
+        type="button"
+        className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
+        onClick={onCancel}
+        disabled={pending}
+      >
+        キャンセル
+      </button>
+      <button
+        type="submit"
+        className="rounded-md bg-[var(--accent-color)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={!canSubmit || pending}
+      >
+        {pending ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/70 border-t-transparent" aria-hidden="true" />
+            保存中...
+          </span>
+        ) : (
+          '保存'
+        )}
+      </button>
+    </div>
   );
 }

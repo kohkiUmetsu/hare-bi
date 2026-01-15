@@ -32,6 +32,32 @@ export type MetricBreakdownRow = {
   totalActualCv: number;
 };
 
+export type PlatformDetailedMetrics = {
+  platformId: string;
+  platformLabel: string;
+  actualAdCost: number;
+  actualCv: number;
+  actualCpa: number;
+  cvr: number;
+  cpc: number;
+  mCv: number;
+  mCvr: number;
+  mCpa: number;
+};
+
+export type TrendBreakdownPoint = {
+  date: string;
+  actualAdCost: number;
+  mspCv: number;
+  cpa: number;
+};
+
+export type TrendBreakdownSeries = {
+  id: string;
+  label: string;
+  points: TrendBreakdownPoint[];
+};
+
 export type DailyMetricRow = {
   date: string;
   actualAdCost: number | null;
@@ -306,6 +332,161 @@ export async function fetchSectionPlatformBreakdown(params: {
   return mapBreakdownRows(rows);
 }
 
+export async function fetchSectionPlatformDetailedMetrics(params: {
+  sectionId: string;
+  startDate: string;
+  endDate: string;
+}): Promise<PlatformDetailedMetrics[]> {
+  const query = `
+    SELECT
+      p.id AS platformId,
+      COALESCE(p.platform_label, p.id) AS platformLabel,
+      SUM(pd.actual_ad_cost) AS actualAdCost,
+      SUM(pd.actual_cv) AS actualCv,
+      SUM(pd.clicks) AS totalClicks,
+      SUM(pd.m_cv) AS mCv,
+      SUM(pd.impressions) AS totalImpressions
+    FROM \`${dataset}.platform_data\` pd
+    LEFT JOIN \`${dataset}.platform\` p
+      ON p.id = pd.platform_id
+    WHERE p.section_id = @sectionId
+      AND pd.aggregation_type = 'daily'
+      AND DATE(pd.created_at) BETWEEN @startDate AND @endDate
+    GROUP BY platformId, platformLabel
+    ORDER BY actualAdCost DESC
+  `;
+
+  const rows = await runQuery<{
+    platformId: string;
+    platformLabel: string;
+    actualAdCost: string | number;
+    actualCv: string | number;
+    totalClicks: string | number;
+    mCv: string | number;
+    totalImpressions: string | number;
+  }>(query, params);
+
+  return rows.map((row) => {
+    const actualAdCost = Number(row.actualAdCost) || 0;
+    const actualCv = Number(row.actualCv) || 0;
+    const totalClicks = Number(row.totalClicks) || 0;
+    const mCv = Number(row.mCv) || 0;
+
+    const actualCpa = actualCv > 0 ? actualAdCost / actualCv : 0;
+    const cvr = totalClicks > 0 ? actualCv / totalClicks : 0;
+    const cpc = totalClicks > 0 ? actualAdCost / totalClicks : 0;
+    const mCvr = totalClicks > 0 ? mCv / totalClicks : 0;
+    const mCpa = mCv > 0 ? actualAdCost / mCv : 0;
+
+    return {
+      platformId: row.platformId,
+      platformLabel: row.platformLabel,
+      actualAdCost,
+      actualCv,
+      actualCpa,
+      cvr,
+      cpc,
+      mCv,
+      mCvr,
+      mCpa,
+    };
+  });
+}
+
+export async function fetchProjectSectionDailyBreakdown(params: {
+  projectId: string;
+  startDate: string;
+  endDate: string;
+}): Promise<TrendBreakdownSeries[]> {
+  const query = `
+    SELECT
+      FORMAT_DATE('%Y-%m-%d', DATE(sd.created_at)) AS date,
+      s.id AS breakdownId,
+      COALESCE(s.label, s.id) AS breakdownLabel,
+      SUM(sd.actual_ad_cost) AS actualAdCost,
+      SUM(sd.msp_cv) AS mspCv
+    FROM \`${dataset}.section_data\` sd
+    LEFT JOIN \`${dataset}.section\` s
+      ON s.id = sd.section_id
+    WHERE s.project_id = @projectId
+      AND sd.aggregation_type = 'daily'
+      AND DATE(sd.created_at) BETWEEN @startDate AND @endDate
+    GROUP BY date, breakdownId, breakdownLabel
+    ORDER BY date
+  `;
+
+  const rows = await runQuery<Record<string, unknown>>(query, params);
+  const seriesMap = new Map<string, TrendBreakdownSeries>();
+
+  rows.forEach((row) => {
+    const id = String(row.breakdownId);
+    const label = String(row.breakdownLabel ?? id);
+    const actualAdCost = toNumber(row.actualAdCost) ?? 0;
+    const mspCv = toNumber(row.mspCv) ?? 0;
+    const cpa = mspCv > 0 ? actualAdCost / mspCv : 0;
+    const point: TrendBreakdownPoint = {
+      date: String(row.date),
+      actualAdCost,
+      mspCv,
+      cpa,
+    };
+
+    if (!seriesMap.has(id)) {
+      seriesMap.set(id, { id, label, points: [] });
+    }
+    seriesMap.get(id)!.points.push(point);
+  });
+
+  return Array.from(seriesMap.values()).sort((a, b) => a.label.localeCompare(b.label, 'ja'));
+}
+
+export async function fetchSectionPlatformDailyBreakdown(params: {
+  sectionId: string;
+  startDate: string;
+  endDate: string;
+}): Promise<TrendBreakdownSeries[]> {
+  const query = `
+    SELECT
+      FORMAT_DATE('%Y-%m-%d', DATE(pd.created_at)) AS date,
+      p.id AS breakdownId,
+      COALESCE(p.platform_label, p.id) AS breakdownLabel,
+      SUM(pd.actual_ad_cost) AS actualAdCost,
+      SUM(pd.msp_cv) AS mspCv
+    FROM \`${dataset}.platform_data\` pd
+    LEFT JOIN \`${dataset}.platform\` p
+      ON p.id = pd.platform_id
+    WHERE p.section_id = @sectionId
+      AND pd.aggregation_type = 'daily'
+      AND DATE(pd.created_at) BETWEEN @startDate AND @endDate
+    GROUP BY date, breakdownId, breakdownLabel
+    ORDER BY date
+  `;
+
+  const rows = await runQuery<Record<string, unknown>>(query, params);
+  const seriesMap = new Map<string, TrendBreakdownSeries>();
+
+  rows.forEach((row) => {
+    const id = String(row.breakdownId);
+    const label = String(row.breakdownLabel ?? id);
+    const actualAdCost = toNumber(row.actualAdCost) ?? 0;
+    const mspCv = toNumber(row.mspCv) ?? 0;
+    const cpa = mspCv > 0 ? actualAdCost / mspCv : 0;
+    const point: TrendBreakdownPoint = {
+      date: String(row.date),
+      actualAdCost,
+      mspCv,
+      cpa,
+    };
+
+    if (!seriesMap.has(id)) {
+      seriesMap.set(id, { id, label, points: [] });
+    }
+    seriesMap.get(id)!.points.push(point);
+  });
+
+  return Array.from(seriesMap.values()).sort((a, b) => a.label.localeCompare(b.label, 'ja'));
+}
+
 export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
   let totalActualAdCost = 0;
   let totalMspCv = 0;
@@ -375,5 +556,22 @@ export function buildMetricSummary(rows: DailyMetricRow[]): MetricSummary {
     avgCpm,
     totalPlatformCv,
     totalPerformanceBasedFee: hasPerformanceFee ? totalPerformanceBasedFee : null,
+  };
+}
+
+export function calculatePreviousPeriod(startDate: string, endDate: string): { startDate: string; endDate: string } {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const daysDiff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+  const previousEnd = new Date(start);
+  previousEnd.setDate(previousEnd.getDate() - 1);
+
+  const previousStart = new Date(previousEnd);
+  previousStart.setDate(previousStart.getDate() - daysDiff + 1);
+
+  return {
+    startDate: previousStart.toISOString().split('T')[0] ?? '',
+    endDate: previousEnd.toISOString().split('T')[0] ?? '',
   };
 }
