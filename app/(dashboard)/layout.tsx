@@ -42,7 +42,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
           className="fixed inset-0 z-30 hidden bg-black/40 peer-checked:block lg:hidden"
           aria-hidden="true"
         />
-        <aside className="fixed inset-y-0 right-0 left-auto z-40 w-64 translate-x-full origin-right bg-[var(--accent-color-500)] shadow-lg transition-transform duration-200 peer-checked:translate-x-0 lg:static lg:z-auto lg:w-28 lg:translate-x-0 lg:shadow-none">
+        <aside className="fixed inset-y-0 right-0 left-auto z-40 w-64 translate-x-full origin-right bg-[var(--accent-color-500)] shadow-lg transition-transform duration-200 peer-checked:translate-x-0 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-28 lg:translate-x-0 lg:shadow-none">
           <nav className="flex h-full flex-col items-stretch pt-20 lg:pt-0">
             {navigation.map((item) => (
               <NavLink key={item.href} href={item.href} icon={item.icon} navToggleId={navToggleId}>
