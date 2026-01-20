@@ -14,8 +14,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Amateras",
-  description: "BigQueryのデータを可視化するダッシュボード",
+  title: "Amateras（アマテラス） – Advertising Analytics Platform by HARE Inc.",
+  description: "Amateras（アマテラス）は複数媒体の広告データを自動で集約・可視化する集計プラットフォームです",
 };
 
 export default function RootLayout({
