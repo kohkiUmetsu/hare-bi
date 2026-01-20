@@ -1,6 +1,7 @@
 "use client";
 
 import Image from 'next/image';
+import { useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -67,6 +68,42 @@ export default function MetricsTrendCharts({
     pointMap: new Map(series.points.map((point) => [point.date, point])),
   }));
   const hasBreakdown = seriesMeta.length > 0;
+
+  // CV/CPAグラフ用の表示状態管理
+  const [visibleCvCpaSeries, setVisibleCvCpaSeries] = useState<Set<string>>(
+    () => new Set(seriesMeta.map((s) => s.id))
+  );
+  // 実広告費グラフ用の表示状態管理
+  const [visibleAdCostSeries, setVisibleAdCostSeries] = useState<Set<string>>(
+    () => new Set(seriesMeta.map((s) => s.id))
+  );
+
+  const toggleCvCpaSeries = (id: string) => {
+    setVisibleCvCpaSeries((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleAdCostSeries = (id: string) => {
+    setVisibleAdCostSeries((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const visibleCvCpaSeriesMeta = seriesMeta.filter((s) => visibleCvCpaSeries.has(s.id));
+  const visibleAdCostSeriesMeta = seriesMeta.filter((s) => visibleAdCostSeries.has(s.id));
 
   const cvTotalsByDate = new Map<string, number>();
   let breakdownMaxCpa = 0;
@@ -198,7 +235,7 @@ export default function MetricsTrendCharts({
               />
               {hasBreakdown ? (
                 <>
-                  {seriesMeta.map((series) => (
+                  {visibleCvCpaSeriesMeta.map((series) => (
                     <Line
                       key={series.id}
                       yAxisId="left"
@@ -211,7 +248,7 @@ export default function MetricsTrendCharts({
                       isAnimationActive={false}
                     />
                   ))}
-                  {seriesMeta.map((series) => (
+                  {visibleCvCpaSeriesMeta.map((series) => (
                     <Bar
                       key={`${series.id}-cv`}
                       yAxisId="right"
@@ -219,6 +256,7 @@ export default function MetricsTrendCharts({
                       name={`${series.label} CV件数`}
                       fill={series.color}
                       barSize={16}
+                      maxBarSize={16}
                       isAnimationActive={false}
                     />
                   ))}
@@ -252,10 +290,28 @@ export default function MetricsTrendCharts({
         {hasBreakdown ? (
           <div className="mt-3 flex flex-wrap gap-3 text-xs text-neutral-600">
             {seriesMeta.map((series) => (
-              <span key={series.id} className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2" style={{ backgroundColor: series.color }} />
-                {series.label}
-              </span>
+              <label key={series.id} className="flex cursor-pointer items-center gap-1.5 select-none">
+                <input
+                  type="checkbox"
+                  checked={visibleCvCpaSeries.has(series.id)}
+                  onChange={() => toggleCvCpaSeries(series.id)}
+                  className="sr-only peer"
+                />
+                <span
+                  className="inline-flex h-4 w-4 items-center justify-center border-2 peer-checked:border-transparent"
+                  style={{
+                    borderColor: series.color,
+                    backgroundColor: visibleCvCpaSeries.has(series.id) ? series.color : 'transparent',
+                  }}
+                >
+                  {visibleCvCpaSeries.has(series.id) && (
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </span>
+                <span className={visibleCvCpaSeries.has(series.id) ? '' : 'opacity-50'}>{series.label}</span>
+              </label>
             ))}
           </div>
         ) : null}
@@ -292,7 +348,7 @@ export default function MetricsTrendCharts({
                   formatter={(value: number) => `¥${formatMetric(value as number)}`}
                   labelFormatter={(value) => formatDate(value)}
                 />
-                {seriesMeta.map((series) => (
+                {visibleAdCostSeriesMeta.map((series) => (
                   <Line
                     key={series.id}
                     type="linear"
@@ -352,10 +408,28 @@ export default function MetricsTrendCharts({
         {hasBreakdown ? (
           <div className="mt-3 flex flex-wrap gap-3 text-xs text-neutral-600">
             {seriesMeta.map((series) => (
-              <span key={series.id} className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2" style={{ backgroundColor: series.color }} />
-                {series.label}
-              </span>
+              <label key={series.id} className="flex cursor-pointer items-center gap-1.5 select-none">
+                <input
+                  type="checkbox"
+                  checked={visibleAdCostSeries.has(series.id)}
+                  onChange={() => toggleAdCostSeries(series.id)}
+                  className="sr-only peer"
+                />
+                <span
+                  className="inline-flex h-4 w-4 items-center justify-center border-2 peer-checked:border-transparent"
+                  style={{
+                    borderColor: series.color,
+                    backgroundColor: visibleAdCostSeries.has(series.id) ? series.color : 'transparent',
+                  }}
+                >
+                  {visibleAdCostSeries.has(series.id) && (
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </span>
+                <span className={visibleAdCostSeries.has(series.id) ? '' : 'opacity-50'}>{series.label}</span>
+              </label>
             ))}
           </div>
         ) : null}
