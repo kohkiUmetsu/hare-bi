@@ -66,7 +66,7 @@ export function NavLink({ href, children, icon, navToggleId }: NavLinkProps) {
         <Image src={iconValue} alt={children as string} width={24} height={24} />
       )}
       {LucideIcon && <LucideIcon className="h-6 w-6" />}
-      <span className="text-[10px] leading-tight">{children}</span>
+      <span className="text-sm leading-tight">{children}</span>
     </Link>
   );
 }
