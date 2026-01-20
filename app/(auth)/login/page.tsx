@@ -12,9 +12,9 @@ export default async function LoginPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold">Amateras ログイン</h1>
+        <h1 className="text-2xl font-semibold">Amateras（アマテラス）</h1>
         <p className="text-sm text-neutral-500">
-          Supabaseアカウントでログインし、ダッシュボードにアクセスします。
+          複数媒体の広告データを自動で集約・可視化する集計プラットフォームです
         </p>
       </div>
       <LoginForm />
