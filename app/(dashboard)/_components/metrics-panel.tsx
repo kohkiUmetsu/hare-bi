@@ -184,7 +184,7 @@ export function MetricsPanel({
       breakdownCurrency: true,
       prefix: '¥',
       icon: '/icons/yen.svg',
-      lowerIsBetter: true,
+      lowerIsBetter: false,
     },
     {
       key: 'actualCv',
