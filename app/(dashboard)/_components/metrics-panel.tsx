@@ -597,6 +597,12 @@ export function MetricsPanel({
               google: 'Google',
               line: 'LINE',
             };
+            const platformIcons: Record<string, string> = {
+              meta: '/platform-icons/meta.svg',
+              tiktok: '/platform-icons/tiktok.svg',
+              google: '/platform-icons/g.svg',
+              line: '/platform-icons/line.svg',
+            };
 
             if (displayPlatforms.length === 0) {
               return null;
@@ -604,80 +610,95 @@ export function MetricsPanel({
 
             return (
               <table className="min-w-full text-xs sm:text-sm">
-                <thead className="bg-[#E7ECF0] text-left text-[11px] uppercase tracking-wider text-neutral-700 sm:text-xs">
+                <thead className="bg-[#E7ECF0] text-center text-[11px] uppercase tracking-wider text-neutral-700 sm:text-xs">
                   <tr>
-                    <th className="px-4 py-3">指標</th>
+                    <th className="w-0 whitespace-nowrap px-4 py-3" />
                     {displayPlatforms.map((type) => (
-                      <th key={type} className="px-4 py-3">
-                        {platformLabels[type]}
+                      <th key={type} className={`w-0 whitespace-nowrap py-3 ${type === 'meta' ? 'px-0' : 'px-4'}`}>
+                        <Image
+                          src={platformIcons[type]}
+                          alt={platformLabels[type]}
+                          width={type === 'meta' ? 64 : 32}
+                          height={32}
+                          className="mx-auto"
+                        />
                       </th>
                     ))}
+                    <th className="w-full" />
                   </tr>
                 </thead>
                 <tbody className="bg-white">
                   <tr className="odd:bg-white even:bg-[#F5F7FA]">
-                    <td className="px-4 py-3 font-medium text-neutral-700">実広告費</td>
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-center font-bold text-neutral-700">実広告費</td>
                     {displayPlatforms.map((type) => (
-                      <td key={type} className="px-4 py-3 text-neutral-900">
+                      <td key={type} className="w-0 whitespace-nowrap px-4 py-3 text-center text-neutral-900">
                         {formatMetric(aggregated[type]!.actualAdCost, 'currency')}
                       </td>
                     ))}
+                    <td className="w-full" />
                   </tr>
                   <tr className="odd:bg-white even:bg-[#F5F7FA]">
-                    <td className="px-4 py-3 font-medium text-neutral-700">CV数</td>
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-center font-bold text-neutral-700">CV数</td>
                     {displayPlatforms.map((type) => (
-                      <td key={type} className="px-4 py-3 text-neutral-900">
+                      <td key={type} className="w-0 whitespace-nowrap px-4 py-3 text-center text-neutral-900">
                         {formatMetric(aggregated[type]!.actualCv)}
                       </td>
                     ))}
+                    <td className="w-full" />
                   </tr>
                   <tr className="odd:bg-white even:bg-[#F5F7FA]">
-                    <td className="px-4 py-3 font-medium text-neutral-700">実CPA</td>
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-center font-bold text-neutral-700">実CPA</td>
                     {displayPlatforms.map((type) => (
-                      <td key={type} className="px-4 py-3 text-neutral-900">
+                      <td key={type} className="w-0 whitespace-nowrap px-4 py-3 text-center text-neutral-900">
                         {formatMetric(aggregated[type]!.actualCpa, 'currency')}
                       </td>
                     ))}
+                    <td className="w-full" />
                   </tr>
                   <tr className="odd:bg-white even:bg-[#F5F7FA]">
-                    <td className="px-4 py-3 font-medium text-neutral-700">CVR</td>
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-center font-bold text-neutral-700">CVR</td>
                     {displayPlatforms.map((type) => (
-                      <td key={type} className="px-4 py-3 text-neutral-900">
+                      <td key={type} className="w-0 whitespace-nowrap px-4 py-3 text-center text-neutral-900">
                         {formatMetric(aggregated[type]!.cvr, 'percent')}
                       </td>
                     ))}
+                    <td className="w-full" />
                   </tr>
                   <tr className="odd:bg-white even:bg-[#F5F7FA]">
-                    <td className="px-4 py-3 font-medium text-neutral-700">CPC</td>
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-center font-bold text-neutral-700">CPC</td>
                     {displayPlatforms.map((type) => (
-                      <td key={type} className="px-4 py-3 text-neutral-900">
+                      <td key={type} className="w-0 whitespace-nowrap px-4 py-3 text-center text-neutral-900">
                         {formatMetric(aggregated[type]!.cpc, 'currency')}
                       </td>
                     ))}
+                    <td className="w-full" />
                   </tr>
                   <tr className="odd:bg-white even:bg-[#F5F7FA]">
-                    <td className="px-4 py-3 font-medium text-neutral-700">mCV数</td>
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-center font-bold text-neutral-700">mCV数</td>
                     {displayPlatforms.map((type) => (
-                      <td key={type} className="px-4 py-3 text-neutral-900">
+                      <td key={type} className="w-0 whitespace-nowrap px-4 py-3 text-center text-neutral-900">
                         {formatMetric(aggregated[type]!.mCv)}
                       </td>
                     ))}
+                    <td className="w-full" />
                   </tr>
                   <tr className="odd:bg-white even:bg-[#F5F7FA]">
-                    <td className="px-4 py-3 font-medium text-neutral-700">mCVR</td>
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-center font-bold text-neutral-700">mCVR</td>
                     {displayPlatforms.map((type) => (
-                      <td key={type} className="px-4 py-3 text-neutral-900">
+                      <td key={type} className="w-0 whitespace-nowrap px-4 py-3 text-center text-neutral-900">
                         {formatMetric(aggregated[type]!.mCvr, 'percent')}
                       </td>
                     ))}
+                    <td className="w-full" />
                   </tr>
                   <tr className="odd:bg-white even:bg-[#F5F7FA]">
-                    <td className="px-4 py-3 font-medium text-neutral-700">mCPA</td>
+                    <td className="w-0 whitespace-nowrap px-4 py-3 text-center font-bold text-neutral-700">mCPA</td>
                     {displayPlatforms.map((type) => (
-                      <td key={type} className="px-4 py-3 text-neutral-900">
+                      <td key={type} className="w-0 whitespace-nowrap px-4 py-3 text-center text-neutral-900">
                         {formatMetric(aggregated[type]!.mCpa, 'currency')}
                       </td>
                     ))}
+                    <td className="w-full" />
                   </tr>
                 </tbody>
               </table>
