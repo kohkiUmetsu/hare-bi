@@ -146,7 +146,7 @@ export function MetricsPanel({
   panelBorderColor,
 }: MetricsPanelProps) {
   const panelStyle = panelBorderColor
-    ? { borderColor: panelBorderColor, borderWidth: 6, borderStyle: 'solid' }
+    ? { borderColor: panelBorderColor, borderWidth: 3, borderStyle: 'solid' }
     : undefined;
 
   if (!metrics.length) {

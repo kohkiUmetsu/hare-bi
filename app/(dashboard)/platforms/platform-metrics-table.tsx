@@ -100,7 +100,7 @@ export function PlatformMetricsTable({
 
   const clearToast = () => setToast({ status: null });
   const panelStyle = panelBorderColor
-    ? { borderColor: panelBorderColor, borderWidth: 6, borderStyle: 'solid' }
+    ? { borderColor: panelBorderColor, borderWidth: 3, borderStyle: 'solid' }
     : undefined;
 
   if (!metrics.length) {

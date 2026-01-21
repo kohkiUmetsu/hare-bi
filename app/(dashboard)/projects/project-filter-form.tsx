@@ -29,7 +29,7 @@ export function ProjectFilterForm({
   }, [initialProjectId]);
   const projectDisabled = projects.length === 0;
   const borderStyle = panelBorderColor
-    ? { borderColor: panelBorderColor, borderWidth: 6, borderStyle: 'solid' }
+    ? { borderColor: panelBorderColor, borderWidth: 3, borderStyle: 'solid' }
     : undefined;
 
   return (
