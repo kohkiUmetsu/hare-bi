@@ -7,6 +7,11 @@ const decimalFormatter = new Intl.NumberFormat("ja-JP", {
   maximumFractionDigits: 2,
 });
 
+const currencyFormatter = new Intl.NumberFormat("ja-JP", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
 const percentFormatter = new Intl.NumberFormat("ja-JP", {
   style: "percent",
   minimumFractionDigits: 2,
@@ -15,7 +20,7 @@ const percentFormatter = new Intl.NumberFormat("ja-JP", {
 
 const dateFormatter = new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium" });
 
-export type MetricFormat = "integer" | "decimal" | "percent";
+export type MetricFormat = "integer" | "decimal" | "percent" | "currency";
 
 export function formatMetric(
   value: number | null | undefined,
@@ -30,6 +35,8 @@ export function formatMetric(
       return decimalFormatter.format(value);
     case "percent":
       return percentFormatter.format(value);
+    case "currency":
+      return `¥${currencyFormatter.format(value)}`;
     default:
       return integerFormatter.format(value);
   }

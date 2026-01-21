@@ -93,7 +93,7 @@ export function PlatformMetricsSummaryTable({ platformMetrics }: PlatformMetrics
 
   return (
     <section className="overflow-x-auto bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
+      <table className="min-w-full text-xs sm:text-sm">
         <thead className="bg-[#3F3F3F] text-left text-[11px] uppercase tracking-wider text-white sm:text-xs">
           <tr>
             <th className="px-4 py-3">指標</th>
@@ -104,12 +104,12 @@ export function PlatformMetricsSummaryTable({ platformMetrics }: PlatformMetrics
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-neutral-100 bg-white">
+        <tbody className="bg-white">
           <tr className="odd:bg-white even:bg-[#F5F7FA]">
             <td className="px-4 py-3 font-medium text-neutral-700">実広告費</td>
             {displayPlatforms.map((type) => (
               <td key={type} className="px-4 py-3 text-neutral-900">
-                ¥{formatMetric(aggregated[type]!.actualAdCost)}
+                {formatMetric(aggregated[type]!.actualAdCost, 'currency')}
               </td>
             ))}
           </tr>
@@ -125,7 +125,7 @@ export function PlatformMetricsSummaryTable({ platformMetrics }: PlatformMetrics
             <td className="px-4 py-3 font-medium text-neutral-700">実CPA</td>
             {displayPlatforms.map((type) => (
               <td key={type} className="px-4 py-3 text-neutral-900">
-                {formatMetric(aggregated[type]!.actualCpa, 'decimal')}
+                {formatMetric(aggregated[type]!.actualCpa, 'currency')}
               </td>
             ))}
           </tr>
@@ -141,7 +141,7 @@ export function PlatformMetricsSummaryTable({ platformMetrics }: PlatformMetrics
             <td className="px-4 py-3 font-medium text-neutral-700">CPC</td>
             {displayPlatforms.map((type) => (
               <td key={type} className="px-4 py-3 text-neutral-900">
-                {formatMetric(aggregated[type]!.cpc, 'decimal')}
+                {formatMetric(aggregated[type]!.cpc, 'currency')}
               </td>
             ))}
           </tr>
@@ -165,7 +165,7 @@ export function PlatformMetricsSummaryTable({ platformMetrics }: PlatformMetrics
             <td className="px-4 py-3 font-medium text-neutral-700">mCPA</td>
             {displayPlatforms.map((type) => (
               <td key={type} className="px-4 py-3 text-neutral-900">
-                {formatMetric(aggregated[type]!.mCpa, 'decimal')}
+                {formatMetric(aggregated[type]!.mCpa, 'currency')}
               </td>
             ))}
           </tr>
