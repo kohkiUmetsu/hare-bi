@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import Image from "next/image";
-import { Building2, RefreshCw, Settings } from "lucide-react";
+import { Building2, ListOrdered, RefreshCw, Settings } from "lucide-react";
 
 const iconMap = {
   Project: "/icons/project.svg",
   Section: "/icons/section.svg",
   Platform: "/icons/platform.svg",
+  AdRanking: ListOrdered,
   Building2,
   RefreshCw,
   Settings,

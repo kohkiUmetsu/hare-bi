@@ -15,6 +15,7 @@ const adminNavigation: NavigationItem[] = [
   { href: "/projects", label: "Projects", icon: "Project" },
   { href: "/sections", label: "Sections", icon: "Section" },
   { href: "/platforms", label: "Platforms", icon: "Platform" },
+  { href: "/ad-ranking", label: "Ad Ranking", icon: "AdRanking" },
   { href: "/agents", label: "Agents", icon: "Building2" },
   { href: "/data-updates", label: "Updates", icon: "RefreshCw" },
   { href: "/settings", label: "Settings", icon: "Settings" },
