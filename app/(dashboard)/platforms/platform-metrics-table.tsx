@@ -29,7 +29,6 @@ export function PlatformMetricsTable({
   metrics,
   platform,
   actualCvEdits,
-  panelBorderColor,
 }: PlatformMetricsTableProps) {
   const [state, formAction] = useServerActionState<PlatformMetricsActionState>(
     updatePlatformActualCv,
@@ -99,10 +98,6 @@ export function PlatformMetricsTable({
   };
 
   const clearToast = () => setToast({ status: null });
-  const panelStyle = panelBorderColor
-    ? { borderColor: panelBorderColor, borderWidth: 3, borderStyle: 'solid' }
-    : undefined;
-
   if (!metrics.length) {
     return null;
   }

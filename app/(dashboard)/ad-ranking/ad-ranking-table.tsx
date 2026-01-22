@@ -99,7 +99,7 @@ export function AdRankingTable({
   const [viewMode, setViewMode] = useState<ViewMode>('ad');
   const [sortKey, setSortKey] = useState<SortKey>('spend');
   const panelStyle = panelBorderColor
-    ? { borderColor: panelBorderColor, borderWidth: 6, borderStyle: 'solid' }
+    ? { borderColor: panelBorderColor, borderWidth: 3, borderStyle: 'solid' }
     : undefined;
 
   const formatMediaCv = (value: number | null) => {
