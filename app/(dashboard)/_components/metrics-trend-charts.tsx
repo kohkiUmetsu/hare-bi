@@ -58,7 +58,7 @@ export default function MetricsTrendCharts({
   panelBorderColor,
 }: MetricsTrendChartsProps) {
   const panelStyle = panelBorderColor
-    ? { borderColor: panelBorderColor, borderWidth: 6, borderStyle: 'solid' }
+    ? { borderColor: panelBorderColor, borderWidth: 3, borderStyle: 'solid' }
     : undefined;
   const activeSeries = (trendBreakdownSeries ?? []).filter((series) => series.points.length > 0);
   const seriesMeta = activeSeries.map((series, index) => ({

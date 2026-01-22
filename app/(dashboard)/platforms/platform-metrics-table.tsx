@@ -100,7 +100,7 @@ export function PlatformMetricsTable({
 
   const clearToast = () => setToast({ status: null });
   const panelStyle = panelBorderColor
-    ? { borderColor: panelBorderColor, borderWidth: 6, borderStyle: 'solid' }
+    ? { borderColor: panelBorderColor, borderWidth: 3, borderStyle: 'solid' }
     : undefined;
 
   if (!metrics.length) {
@@ -133,10 +133,9 @@ export function PlatformMetricsTable({
       </p>
 
       <section
-        className="overflow-x-auto border border-neutral-200 bg-white shadow-sm"
-        style={panelStyle}
+        className="overflow-x-auto bg-white shadow-sm"
       >
-        <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
+        <table className="min-w-full text-xs sm:text-sm">
           <thead className="bg-[#3F3F3F] text-left text-[11px] uppercase tracking-wider text-white sm:text-xs">
             <tr>
               <th className="px-4 py-3">日付</th>
@@ -156,7 +155,7 @@ export function PlatformMetricsTable({
               {showPerformanceFee ? <th className="px-4 py-3">成果報酬費</th> : null}
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100 bg-white">
+          <tbody className="bg-white">
             {metrics.map((row) => (
               <tr
                 key={row.date}
@@ -171,7 +170,7 @@ export function PlatformMetricsTable({
                 className="whitespace-nowrap cursor-pointer transition-colors odd:bg-white even:bg-[#F5F7FA] hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
               >
                 <td className="px-4 py-3 text-neutral-700">{row.date}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualAdCost)}</td>
+                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.actualAdCost, 'currency')}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.impressions)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.clicks)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mspCv)}</td>
@@ -185,15 +184,15 @@ export function PlatformMetricsTable({
                   {formatMetric(row.actualCv)}
                 </td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.platformCv)}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpa, 'decimal')}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpc, 'decimal')}</td>
+                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpa, 'currency')}</td>
+                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpc, 'currency')}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cvr, 'percent')}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mCv)}</td>
                 <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mCvr, 'percent')}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mCpa, 'decimal')}</td>
-                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpm, 'decimal')}</td>
+                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.mCpa, 'currency')}</td>
+                <td className="px-4 py-3 text-neutral-900">{formatMetric(row.cpm, 'currency')}</td>
                 {showPerformanceFee ? (
-                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.performanceBasedFee)}</td>
+                  <td className="px-4 py-3 text-neutral-900">{formatMetric(row.performanceBasedFee, 'currency')}</td>
                 ) : null}
               </tr>
             ))}

@@ -134,7 +134,7 @@ export function PlatformFilterForm({
   const sectionDisabled = sectionOptions.length === 0;
   const platformDisabled = filteredPlatforms.length === 0;
   const borderStyle = panelBorderColor
-    ? { borderColor: panelBorderColor, borderWidth: 6, borderStyle: 'solid' }
+    ? { borderColor: panelBorderColor, borderWidth: 3, borderStyle: 'solid' }
     : undefined;
 
   return (
