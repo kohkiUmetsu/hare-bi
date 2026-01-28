@@ -3,13 +3,13 @@ const integerFormatter = new Intl.NumberFormat("ja-JP", {
 });
 
 const decimalFormatter = new Intl.NumberFormat("ja-JP", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
 });
 
 const currencyFormatter = new Intl.NumberFormat("ja-JP", {
   minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
+  maximumFractionDigits: 0,
 });
 
 const percentFormatter = new Intl.NumberFormat("ja-JP", {
@@ -32,7 +32,7 @@ export function formatMetric(
 
   switch (type) {
     case "decimal":
-      return decimalFormatter.format(value);
+      return `¥${decimalFormatter.format(value)}`;
     case "percent":
       return percentFormatter.format(value);
     case "currency":

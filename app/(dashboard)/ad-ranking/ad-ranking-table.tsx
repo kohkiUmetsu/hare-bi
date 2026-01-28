@@ -5,7 +5,7 @@ import type { AdRankingRow } from '@/lib/ad-ranking-types';
 import { formatMetric } from '@/lib/format';
 
 type SortKey = 'spend' | 'mediaCv' | 'cpa';
-type ViewMode = 'ad' | 'intro';
+type ViewMode = 'ad' | 'introAndP' | 'p' | 'intro';
 
 const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
   { key: 'spend', label: '消化金額 (高い順)' },
@@ -15,7 +15,9 @@ const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
 
 const VIEW_OPTIONS: Array<{ key: ViewMode; label: string }> = [
   { key: 'ad', label: 'アド別' },
-  { key: 'intro', label: '冒頭・P別' },
+  { key: 'introAndP', label: '冒頭・P別' },
+  { key: 'p', label: 'P別' },
+  { key: 'intro', label: '冒頭別' },
 ];
 
 type DisplayRow = {
@@ -40,12 +42,25 @@ function formatPlatformLabel(platform: AdRankingRow['platform']): string {
   return 'LINE';
 }
 
-function extractIntroPrefix(name: string): string | null {
+function extractIntroAndPPrefix(name: string): string | null {
   const match = name.match(/^(【冒頭\d+】\[P\d+\])/);
   return match ? match[1] : null;
 }
 
-function buildIntroRows(rows: AdRankingRow[]): DisplayRow[] {
+function extractIntroPrefix(name: string): string | null {
+  const match = name.match(/^(【冒頭\d+】)/);
+  return match ? match[1] : null;
+}
+
+function extractPPrefix(name: string): string | null {
+  const match = name.match(/(\[P\d+\])/);
+  return match ? match[1] : null;
+}
+
+function buildGroupedRows(
+  rows: AdRankingRow[],
+  extractor: (name: string) => string | null
+): DisplayRow[] {
   const map = new Map<
     string,
     {
@@ -56,7 +71,7 @@ function buildIntroRows(rows: AdRankingRow[]): DisplayRow[] {
   >();
 
   rows.forEach((row) => {
-    const prefix = extractIntroPrefix(row.adName);
+    const prefix = extractor(row.adName);
     if (!prefix) {
       return;
     }
@@ -110,17 +125,24 @@ export function AdRankingTable({
   };
 
   const sortedRows = useMemo(() => {
-    const displayRows: DisplayRow[] =
-      viewMode === 'intro'
-        ? buildIntroRows(rows)
-        : rows.map((row, index) => ({
-            key: `${row.platform}-${row.adId}-${index}`,
-            platformLabel: formatPlatformLabel(row.platform),
-            adName: row.adName,
-            spend: row.spend,
-            mediaCv: row.mediaCv,
-            cpa: row.cpa,
-          }));
+    let displayRows: DisplayRow[] = [];
+
+    if (viewMode === 'introAndP') {
+      displayRows = buildGroupedRows(rows, extractIntroAndPPrefix);
+    } else if (viewMode === 'p') {
+      displayRows = buildGroupedRows(rows, extractPPrefix);
+    } else if (viewMode === 'intro') {
+      displayRows = buildGroupedRows(rows, extractIntroPrefix);
+    } else {
+      displayRows = rows.map((row, index) => ({
+        key: `${row.platform}-${row.adId}-${index}`,
+        platformLabel: formatPlatformLabel(row.platform),
+        adName: row.adName,
+        spend: row.spend,
+        mediaCv: row.mediaCv,
+        cpa: row.cpa,
+      }));
+    }
 
     const filtered = displayRows.filter(
       (row) =>
