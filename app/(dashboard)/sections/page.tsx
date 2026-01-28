@@ -220,9 +220,9 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
             <Image
               src={projectIconUrl}
               alt="Project icon"
-              width={200}
-              height={200}
-              className="h-32 w-32 lg:h-48 lg:w-48 object-contain"
+              width={400}
+              height={400}
+              className="h-64 w-64 lg:h-96 lg:w-96 object-contain"
             />
           </div>
         ) : null}
