@@ -4,6 +4,20 @@ function formatDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+export function getTodayDateString(): string {
+  return formatDate(new Date());
+}
+
+export function getYesterdayDateString(): string {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - 1);
+  return formatDate(date);
+}
+
+export function isDateInRange(target: string, start: string, end: string): boolean {
+  return start <= target && target <= end;
+}
+
 export function buildDefaultDateRange(days = 6): { start: string; end: string } {
   const end = new Date();
   const start = new Date(end);

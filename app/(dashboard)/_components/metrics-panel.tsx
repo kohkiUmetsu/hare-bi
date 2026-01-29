@@ -46,10 +46,16 @@ function aggregateByPlatformType(metrics: PlatformDetailedMetrics[]) {
       mCv: 0,
     };
 
+    const inferredClicks =
+      metric.totalClicks > 0
+        ? metric.totalClicks
+        : metric.cvr > 0 && metric.actualCv > 0
+        ? metric.actualCv / metric.cvr
+        : 0;
     aggregated.set(type, {
       actualAdCost: existing.actualAdCost + metric.actualAdCost,
       actualCv: existing.actualCv + metric.actualCv,
-      totalClicks: existing.totalClicks + (metric.cvr > 0 && metric.actualCv > 0 ? metric.actualCv / metric.cvr : 0),
+      totalClicks: existing.totalClicks + inferredClicks,
       mCv: existing.mCv + metric.mCv,
     });
   }

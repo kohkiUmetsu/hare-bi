@@ -16,11 +16,25 @@ import {
   type SectionOption,
   type TrendBreakdownSeries,
 } from "@/lib/metrics";
-import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
+import {
+  buildDefaultDateRange,
+  getTodayDateString,
+  getYesterdayDateString,
+  isDateInRange,
+  normalizeDateRange,
+  parseDateParam,
+} from "@/lib/date-range";
 import { requireAuth } from "@/lib/auth-server";
 import { toProjectKey } from "@/lib/filter-options";
 import { buildProjectIconUrl } from "@/lib/project-assets";
 import { getProjectAppearanceByName } from "@/lib/settings";
+import { fetchRealtimeProjectSnapshot } from "@/lib/realtime-metrics";
+import {
+  mergeBreakdowns,
+  mergeDailyMetrics,
+  mergePlatformDetailedMetrics,
+  mergeTrendSeries,
+} from "@/lib/realtime-merge";
 
 interface SectionsPageProps {
   searchParams?: {
@@ -79,6 +93,10 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
   const parsedStart = parseDateParam(searchParams?.startDate, defaultStart);
   const parsedEnd = parseDateParam(searchParams?.endDate, defaultEnd);
   const { start: startDate, end: endDate } = normalizeDateRange(parsedStart, parsedEnd);
+  const today = getTodayDateString();
+  const includesToday = isDateInRange(today, startDate, endDate);
+  const bqEndDate = includesToday ? getYesterdayDateString() : endDate;
+  const hasBqRange = startDate <= bqEndDate;
 
   let sections: SectionOption[] = [];
   let projectOptions: ProjectFilterOption[] = [];
@@ -137,26 +155,34 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
         previousMetrics,
         previousBreakdown,
       ] = await Promise.all([
-        fetchSectionDailyMetrics({
-          entityId: selectedSectionId,
-          startDate,
-          endDate,
-        }),
-        fetchSectionPlatformBreakdown({
-          sectionId: selectedSectionId,
-          startDate,
-          endDate,
-        }),
-        fetchSectionPlatformDetailedMetrics({
-          sectionId: selectedSectionId,
-          startDate,
-          endDate,
-        }),
-        fetchSectionPlatformDailyBreakdown({
-          sectionId: selectedSectionId,
-          startDate,
-          endDate,
-        }),
+        hasBqRange
+          ? fetchSectionDailyMetrics({
+              entityId: selectedSectionId,
+              startDate,
+              endDate: bqEndDate,
+            })
+          : Promise.resolve([] as DailyMetricRow[]),
+        hasBqRange
+          ? fetchSectionPlatformBreakdown({
+              sectionId: selectedSectionId,
+              startDate,
+              endDate: bqEndDate,
+            })
+          : Promise.resolve([] as MetricBreakdownRow[]),
+        hasBqRange
+          ? fetchSectionPlatformDetailedMetrics({
+              sectionId: selectedSectionId,
+              startDate,
+              endDate: bqEndDate,
+            })
+          : Promise.resolve([] as PlatformDetailedMetrics[]),
+        hasBqRange
+          ? fetchSectionPlatformDailyBreakdown({
+              sectionId: selectedSectionId,
+              startDate,
+              endDate: bqEndDate,
+            })
+          : Promise.resolve([] as TrendBreakdownSeries[]),
         fetchSectionDailyMetrics({
           entityId: selectedSectionId,
           startDate: previousPeriod.startDate,
@@ -181,6 +207,63 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
         };
       });
       previousPeriodSummary = previousMetrics.length > 0 ? buildMetricSummary(previousMetrics) : null;
+
+      if (includesToday && selectedProjectId) {
+        const selectedProjectName =
+          projectOptions.find((option) => option.id === selectedProjectId)?.label ?? null;
+        if (selectedProjectName) {
+          try {
+            const realtimeSnapshot = await fetchRealtimeProjectSnapshot({
+              projectName: selectedProjectName,
+              targetDate: today,
+            });
+            if (realtimeSnapshot) {
+              const realtimeSectionRow = realtimeSnapshot.sectionDailyMap.get(selectedSectionId) ?? null;
+              metrics = mergeDailyMetrics(metrics, realtimeSectionRow, today);
+
+              const platformIds = new Set(
+                Array.from(realtimeSnapshot.platformSectionMap.entries())
+                  .filter(([, sectionId]) => sectionId === selectedSectionId)
+                  .map(([platformId]) => platformId)
+              );
+
+              const realtimePlatformBreakdown = new Map(
+                Array.from(realtimeSnapshot.platformBreakdownMap.entries()).filter(([platformId]) =>
+                  platformIds.has(platformId)
+                )
+              );
+              platformBreakdown = mergeBreakdowns(
+                platformBreakdown,
+                realtimePlatformBreakdown,
+                realtimeSnapshot.platformLabels
+              );
+
+              const realtimePlatformDetails = new Map(
+                Array.from(realtimeSnapshot.platformDetailMap.entries()).filter(([platformId]) =>
+                  platformIds.has(platformId)
+                )
+              );
+              platformDetailedMetrics = mergePlatformDetailedMetrics(
+                platformDetailedMetrics,
+                realtimePlatformDetails
+              );
+
+              breakdownSeries = mergeTrendSeries(
+                breakdownSeries,
+                new Map(
+                  Array.from(realtimeSnapshot.platformDailyMap.entries()).filter(([platformId]) =>
+                    platformIds.has(platformId)
+                  )
+                ),
+                realtimeSnapshot.platformLabels,
+                today
+              );
+            }
+          } catch (error) {
+            console.error("[SectionsPage] realtime fetch failed", error);
+          }
+        }
+      }
     }
   } catch (error) {
     loadError = error instanceof Error ? error.message : "BigQueryからの取得に失敗しました。";

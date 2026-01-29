@@ -43,6 +43,8 @@ export type PlatformDetailedMetrics = {
   mCv: number;
   mCvr: number;
   mCpa: number;
+  totalClicks: number;
+  totalImpressions: number;
 };
 
 export type TrendBreakdownPoint = {
@@ -389,6 +391,8 @@ export async function fetchSectionPlatformDetailedMetrics(params: {
       mCv,
       mCvr,
       mCpa,
+      totalClicks,
+      totalImpressions: Number(row.totalImpressions) || 0,
     };
   });
 }

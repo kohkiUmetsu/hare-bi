@@ -14,10 +14,19 @@ import {
   type ProjectOption,
   type TrendBreakdownSeries,
 } from "@/lib/metrics";
-import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
+import {
+  buildDefaultDateRange,
+  getTodayDateString,
+  getYesterdayDateString,
+  isDateInRange,
+  normalizeDateRange,
+  parseDateParam,
+} from "@/lib/date-range";
 import { requireAdmin } from "@/lib/auth-server";
 import { buildProjectIconUrl } from "@/lib/project-assets";
 import { getProjectAppearanceByName } from "@/lib/settings";
+import { fetchRealtimeProjectSnapshot } from "@/lib/realtime-metrics";
+import { mergeBreakdowns, mergeDailyMetrics, mergeTrendSeries } from "@/lib/realtime-merge";
 
 interface ProjectsPageProps {
   searchParams?: {
@@ -44,6 +53,10 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
   const parsedStart = parseDateParam(searchParams?.startDate, defaultStart);
   const parsedEnd = parseDateParam(searchParams?.endDate, defaultEnd);
   const { start: startDate, end: endDate } = normalizeDateRange(parsedStart, parsedEnd);
+  const today = getTodayDateString();
+  const includesToday = isDateInRange(today, startDate, endDate);
+  const bqEndDate = includesToday ? getYesterdayDateString() : endDate;
+  const hasBqRange = startDate <= bqEndDate;
 
   let projects: ProjectOption[] = [];
   let selectedProjectId: string | null = null;
@@ -82,13 +95,19 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         previousMetrics,
         previousBreakdown,
       ] = await Promise.all([
-        fetchProjectDailyMetrics({
-          entityId: selectedProjectId,
-          startDate,
-          endDate,
-        }),
-        fetchProjectSectionBreakdown({ projectId: selectedProjectId, startDate, endDate }),
-        fetchProjectSectionDailyBreakdown({ projectId: selectedProjectId, startDate, endDate }),
+        hasBqRange
+          ? fetchProjectDailyMetrics({
+              entityId: selectedProjectId,
+              startDate,
+              endDate: bqEndDate,
+            })
+          : Promise.resolve([] as DailyMetricRow[]),
+        hasBqRange
+          ? fetchProjectSectionBreakdown({ projectId: selectedProjectId, startDate, endDate: bqEndDate })
+          : Promise.resolve([] as MetricBreakdownRow[]),
+        hasBqRange
+          ? fetchProjectSectionDailyBreakdown({ projectId: selectedProjectId, startDate, endDate: bqEndDate })
+          : Promise.resolve([] as TrendBreakdownSeries[]),
         fetchProjectDailyMetrics({
           entityId: selectedProjectId,
           startDate: previousPeriod.startDate,
@@ -112,6 +131,31 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         };
       });
       previousPeriodSummary = previousMetrics.length > 0 ? buildMetricSummary(previousMetrics) : null;
+
+      if (includesToday && selectedProjectName) {
+        try {
+          const realtimeSnapshot = await fetchRealtimeProjectSnapshot({
+            projectName: selectedProjectName,
+            targetDate: today,
+          });
+          if (realtimeSnapshot) {
+            metrics = mergeDailyMetrics(metrics, realtimeSnapshot.projectDaily, today);
+            sectionBreakdown = mergeBreakdowns(
+              sectionBreakdown,
+              realtimeSnapshot.sectionBreakdownMap,
+              realtimeSnapshot.sectionLabels
+            );
+            breakdownSeries = mergeTrendSeries(
+              breakdownSeries,
+              realtimeSnapshot.sectionDailyMap,
+              realtimeSnapshot.sectionLabels,
+              today
+            );
+          }
+        } catch (error) {
+          console.error("[ProjectsPage] realtime fetch failed", error);
+        }
+      }
     }
   } catch (error) {
     loadError = error instanceof Error ? error.message : "BigQueryからの取得に失敗しました。";

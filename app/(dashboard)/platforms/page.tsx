@@ -12,11 +12,20 @@ import {
   type PlatformOption,
 } from "@/lib/metrics";
 import { fetchPlatformActualCvEditMap } from "@/lib/platform-metrics";
-import { buildDefaultDateRange, normalizeDateRange, parseDateParam } from "@/lib/date-range";
+import {
+  buildDefaultDateRange,
+  getTodayDateString,
+  getYesterdayDateString,
+  isDateInRange,
+  normalizeDateRange,
+  parseDateParam,
+} from "@/lib/date-range";
 import { requireAdmin } from "@/lib/auth-server";
 import { toProjectKey } from "@/lib/filter-options";
 import { buildProjectIconUrl } from "@/lib/project-assets";
 import { getProjectAppearanceByName } from "@/lib/settings";
+import { fetchRealtimeProjectSnapshot } from "@/lib/realtime-metrics";
+import { mergeDailyMetrics } from "@/lib/realtime-merge";
 
 interface PlatformsPageProps {
   searchParams?: {
@@ -121,6 +130,10 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
   const parsedStart = parseDateParam(searchParams?.startDate, defaultStart);
   const parsedEnd = parseDateParam(searchParams?.endDate, defaultEnd);
   const { start: startDate, end: endDate } = normalizeDateRange(parsedStart, parsedEnd);
+  const today = getTodayDateString();
+  const includesToday = isDateInRange(today, startDate, endDate);
+  const bqEndDate = includesToday ? getYesterdayDateString() : endDate;
+  const hasBqRange = startDate <= bqEndDate;
 
   let platforms: PlatformOption[] = [];
   let projectOptions: ProjectFilterOption[] = [];
@@ -168,11 +181,13 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
       const previousPeriod = calculatePreviousPeriod(startDate, endDate);
 
       const [metricsResult, previousMetrics] = await Promise.all([
-        fetchPlatformDailyMetrics({
-          entityId: selectedPlatformId,
-          startDate,
-          endDate,
-        }),
+        hasBqRange
+          ? fetchPlatformDailyMetrics({
+              entityId: selectedPlatformId,
+              startDate,
+              endDate: bqEndDate,
+            })
+          : Promise.resolve([] as DailyMetricRow[]),
         fetchPlatformDailyMetrics({
           entityId: selectedPlatformId,
           startDate: previousPeriod.startDate,
@@ -182,14 +197,37 @@ export default async function PlatformsPage({ searchParams }: PlatformsPageProps
       metrics = metricsResult;
       previousPeriodSummary = previousMetrics.length > 0 ? buildMetricSummary(previousMetrics) : null;
 
-      try {
-        actualCvEdits = await fetchPlatformActualCvEditMap({
-          platformId: selectedPlatformId,
-          startDate,
-          endDate,
-        });
-      } catch {
+      if (hasBqRange) {
+        try {
+          actualCvEdits = await fetchPlatformActualCvEditMap({
+            platformId: selectedPlatformId,
+            startDate,
+            endDate: bqEndDate,
+          });
+        } catch {
+          actualCvEdits = {};
+        }
+      } else {
         actualCvEdits = {};
+      }
+
+      if (includesToday && selectedProjectId) {
+        const selectedProjectName =
+          projectOptions.find((option) => option.id === selectedProjectId)?.label ?? null;
+        if (selectedProjectName) {
+          try {
+            const realtimeSnapshot = await fetchRealtimeProjectSnapshot({
+              projectName: selectedProjectName,
+              targetDate: today,
+            });
+            if (realtimeSnapshot) {
+              const realtimeRow = realtimeSnapshot.platformDailyMap.get(selectedPlatformId) ?? null;
+              metrics = mergeDailyMetrics(metrics, realtimeRow, today);
+            }
+          } catch (error) {
+            console.error("[PlatformsPage] realtime fetch failed", error);
+          }
+        }
       }
     }
 
