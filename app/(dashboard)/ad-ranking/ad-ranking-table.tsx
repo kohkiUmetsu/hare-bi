@@ -6,6 +6,7 @@ import { formatMetric } from '@/lib/format';
 
 type SortKey = 'spend' | 'mediaCv' | 'cpa';
 type ViewMode = 'ad' | 'introAndP' | 'p' | 'intro';
+type AccountViewMode = 'project' | 'account';
 
 const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
   { key: 'spend', label: '消化金額 (高い順)' },
@@ -18,6 +19,11 @@ const VIEW_OPTIONS: Array<{ key: ViewMode; label: string }> = [
   { key: 'introAndP', label: '冒頭・P別' },
   { key: 'p', label: 'P別' },
   { key: 'intro', label: '冒頭別' },
+];
+
+const ACCOUNT_VIEW_OPTIONS: Array<{ key: AccountViewMode; label: string }> = [
+  { key: 'project', label: '全体' },
+  { key: 'account', label: '広告アカウント別' },
 ];
 
 type DisplayRow = {
@@ -104,6 +110,73 @@ function buildGroupedRows(
   });
 }
 
+function buildDisplayRows(rows: AdRankingRow[], viewMode: ViewMode): DisplayRow[] {
+  if (viewMode === 'introAndP') {
+    return buildGroupedRows(rows, extractIntroAndPPrefix);
+  }
+  if (viewMode === 'p') {
+    return buildGroupedRows(rows, extractPPrefix);
+  }
+  if (viewMode === 'intro') {
+    return buildGroupedRows(rows, extractIntroPrefix);
+  }
+  return rows.map((row, index) => ({
+    key: `${row.platform}-${row.accountId}-${row.adId}-${index}`,
+    platformLabel: formatPlatformLabel(row.platform),
+    adName: row.adName,
+    spend: row.spend,
+    mediaCv: row.mediaCv,
+    cpa: row.cpa,
+  }));
+}
+
+function sortDisplayRows(displayRows: DisplayRow[], sortKey: SortKey): DisplayRow[] {
+  const filtered = displayRows.filter(
+    (row) =>
+      !(
+        row.spend === 0 &&
+        (row.mediaCv ?? 0) === 0 &&
+        (row.cpa ?? 0) === 0
+      )
+  );
+
+  return filtered.sort((a, b) => {
+    if (sortKey === 'mediaCv') {
+      const aValue = a.mediaCv ?? Number.NEGATIVE_INFINITY;
+      const bValue = b.mediaCv ?? Number.NEGATIVE_INFINITY;
+      return bValue - aValue;
+    }
+    if (sortKey === 'cpa') {
+      const aCpa = a.mediaCv && a.mediaCv > 0 && a.cpa !== null ? a.cpa : Number.POSITIVE_INFINITY;
+      const bCpa = b.mediaCv && b.mediaCv > 0 && b.cpa !== null ? b.cpa : Number.POSITIVE_INFINITY;
+      return aCpa - bCpa;
+    }
+    return b.spend - a.spend;
+  });
+}
+
+function groupRowsByAccount(rows: AdRankingRow[]) {
+  const map = new Map<
+    string,
+    {
+      key: string;
+      label: string;
+      rows: AdRankingRow[];
+    }
+  >();
+
+  rows.forEach((row) => {
+    const accountLabel = row.accountName.trim() || row.accountId;
+    const label = `${formatPlatformLabel(row.platform)} / ${accountLabel}`;
+    const key = `${row.platform}-${row.accountId}`;
+    const current = map.get(key) ?? { key, label, rows: [] };
+    current.rows.push(row);
+    map.set(key, current);
+  });
+
+  return Array.from(map.values());
+}
+
 export function AdRankingTable({
   rows,
   panelBorderColor,
@@ -112,6 +185,7 @@ export function AdRankingTable({
   panelBorderColor: string | null;
 }) {
   const [viewMode, setViewMode] = useState<ViewMode>('ad');
+  const [accountViewMode, setAccountViewMode] = useState<AccountViewMode>('project');
   const [sortKey, setSortKey] = useState<SortKey>('spend');
   const panelStyle = panelBorderColor
     ? { borderColor: panelBorderColor, borderWidth: 3, borderStyle: 'solid' }
@@ -124,51 +198,68 @@ export function AdRankingTable({
     return formatMetric(value);
   };
 
-  const sortedRows = useMemo(() => {
-    let displayRows: DisplayRow[] = [];
+  const sortedRows = useMemo(
+    () => sortDisplayRows(buildDisplayRows(rows, viewMode), sortKey),
+    [rows, sortKey, viewMode]
+  );
 
-    if (viewMode === 'introAndP') {
-      displayRows = buildGroupedRows(rows, extractIntroAndPPrefix);
-    } else if (viewMode === 'p') {
-      displayRows = buildGroupedRows(rows, extractPPrefix);
-    } else if (viewMode === 'intro') {
-      displayRows = buildGroupedRows(rows, extractIntroPrefix);
-    } else {
-      displayRows = rows.map((row, index) => ({
-        key: `${row.platform}-${row.adId}-${index}`,
-        platformLabel: formatPlatformLabel(row.platform),
-        adName: row.adName,
-        spend: row.spend,
-        mediaCv: row.mediaCv,
-        cpa: row.cpa,
-      }));
+  const accountTables = useMemo(() => {
+    if (accountViewMode !== 'account') {
+      return [];
+    }
+    return groupRowsByAccount(rows).map((group) => ({
+      ...group,
+      displayRows: sortDisplayRows(buildDisplayRows(group.rows, viewMode), sortKey),
+    }));
+  }, [accountViewMode, rows, sortKey, viewMode]);
+
+  const hasDisplayRows =
+    accountViewMode === 'account'
+      ? accountTables.some((group) => group.displayRows.length > 0)
+      : sortedRows.length > 0;
+
+  const renderTable = (displayRows: DisplayRow[]) => {
+    if (displayRows.length === 0) {
+      return (
+        <section className="bg-white px-4 py-6 text-sm text-neutral-500 shadow-sm" style={panelStyle}>
+          表示するデータがありません。媒体アカウント設定を確認してください。
+        </section>
+      );
     }
 
-    const filtered = displayRows.filter(
-      (row) =>
-        !(
-          row.spend === 0 &&
-          (row.mediaCv ?? 0) === 0 &&
-          (row.cpa ?? 0) === 0
-        )
+    return (
+      <section className="overflow-x-auto bg-white shadow-sm" style={panelStyle}>
+        <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
+          <thead className="bg-[#3F3F3F] text-left text-[11px] uppercase tracking-wider text-white sm:text-xs">
+            <tr>
+              <th className="w-12 px-2 py-3 text-right">順位</th>
+              <th className="px-4 py-3">媒体</th>
+              <th className="px-4 py-3">アド名</th>
+              <th className="px-4 py-3 text-right">消化金額</th>
+              <th className="px-4 py-3 text-right">媒体CV</th>
+              <th className="px-4 py-3 text-right">CPA</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-100 bg-white">
+            {displayRows.map((row, index) => (
+              <tr key={row.key} className="odd:bg-white even:bg-[#F5F7FA]">
+                <td className="w-12 px-2 py-3 text-right text-neutral-700">{index + 1}</td>
+                <td className="px-4 py-3 text-neutral-700">{row.platformLabel}</td>
+                <td className="px-4 py-3 text-neutral-900">{row.adName}</td>
+                <td className="px-4 py-3 text-right text-neutral-900">¥{formatMetric(row.spend)}</td>
+                <td className="px-4 py-3 text-right text-neutral-900">{formatMediaCv(row.mediaCv)}</td>
+                <td className="px-4 py-3 text-right text-neutral-900">
+                  {formatMetric(row.cpa, 'decimal')}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
     );
+  };
 
-    return filtered.sort((a, b) => {
-      if (sortKey === 'mediaCv') {
-        const aValue = a.mediaCv ?? Number.NEGATIVE_INFINITY;
-        const bValue = b.mediaCv ?? Number.NEGATIVE_INFINITY;
-        return bValue - aValue;
-      }
-      if (sortKey === 'cpa') {
-        const aCpa = a.mediaCv && a.mediaCv > 0 && a.cpa !== null ? a.cpa : Number.POSITIVE_INFINITY;
-        const bCpa = b.mediaCv && b.mediaCv > 0 && b.cpa !== null ? b.cpa : Number.POSITIVE_INFINITY;
-        return aCpa - bCpa;
-      }
-      return b.spend - a.spend;
-    });
-  }, [rows, sortKey, viewMode]);
-
-  if (sortedRows.length === 0) {
+  if (!hasDisplayRows) {
     return (
       <section className="bg-white px-4 py-6 text-sm text-neutral-500 shadow-sm" style={panelStyle}>
         表示するデータがありません。媒体アカウント設定を確認してください。
@@ -178,6 +269,22 @@ export function AdRankingTable({
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap gap-2">
+        {ACCOUNT_VIEW_OPTIONS.map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            onClick={() => setAccountViewMode(option.key)}
+            className={
+              accountViewMode === option.key
+                ? 'bg-[#f4d03f] px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-[#f0c929]'
+                : 'border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50'
+            }
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
       <div className="flex flex-wrap gap-2">
         {VIEW_OPTIONS.map((option) => (
           <button
@@ -210,34 +317,18 @@ export function AdRankingTable({
           </button>
         ))}
       </div>
-      <section className="overflow-x-auto bg-white shadow-sm" style={panelStyle}>
-        <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
-          <thead className="bg-[#3F3F3F] text-left text-[11px] uppercase tracking-wider text-white sm:text-xs">
-            <tr>
-              <th className="w-12 px-2 py-3 text-right">順位</th>
-              <th className="px-4 py-3">媒体</th>
-              <th className="px-4 py-3">アド名</th>
-              <th className="px-4 py-3 text-right">消化金額</th>
-              <th className="px-4 py-3 text-right">媒体CV</th>
-              <th className="px-4 py-3 text-right">CPA</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-100 bg-white">
-            {sortedRows.map((row, index) => (
-              <tr key={row.key} className="odd:bg-white even:bg-[#F5F7FA]">
-                <td className="w-12 px-2 py-3 text-right text-neutral-700">{index + 1}</td>
-                <td className="px-4 py-3 text-neutral-700">{row.platformLabel}</td>
-                <td className="px-4 py-3 text-neutral-900">{row.adName}</td>
-                <td className="px-4 py-3 text-right text-neutral-900">¥{formatMetric(row.spend)}</td>
-                <td className="px-4 py-3 text-right text-neutral-900">{formatMediaCv(row.mediaCv)}</td>
-                <td className="px-4 py-3 text-right text-neutral-900">
-                  {formatMetric(row.cpa, 'decimal')}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      {accountViewMode === 'account' ? (
+        <div className="flex flex-col gap-6">
+          {accountTables.map((group) => (
+            <div key={group.key} className="flex flex-col gap-3">
+              <div className="text-sm font-semibold text-neutral-700">{group.label}</div>
+              {renderTable(group.displayRows)}
+            </div>
+          ))}
+        </div>
+      ) : (
+        renderTable(sortedRows)
+      )}
     </div>
   );
 }

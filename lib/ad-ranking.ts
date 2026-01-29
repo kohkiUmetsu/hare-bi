@@ -116,10 +116,11 @@ function base64UrlEncode(value: string | Buffer): string {
 }
 
 async function fetchGoogleAdsAdInsights(
-  customerId: string,
+  account: AccountSummary,
   startDate: string,
   endDate: string
 ): Promise<AdRankingRow[]> {
+  const { accountId: customerId, accountName } = account;
   if (
     !GOOGLE_ADS_DEVELOPER_TOKEN ||
     !GOOGLE_ADS_CLIENT_ID ||
@@ -155,17 +156,20 @@ async function fetchGoogleAdsAdInsights(
     ORDER BY metrics.cost_micros DESC
   `;
 
-  const rows: AdRankingRow[] = [];
   try {
-    const stream = customer.queryStream(query);
-    for await (const item of stream) {
-    // console.log('[AdRanking][Google] row', item);
+    const rows: AdRankingRow[] = [];
+    // Use query() instead of queryStream() to avoid stream-chain issues in Next.js
+    const response = await customer.query(query);
+
+    for (const item of response) {
       const adId = item.ad_group_ad?.ad?.id ? String(item.ad_group_ad.ad.id) : '';
       const adName = item.ad_group_ad?.ad?.name ?? adId ?? '(名前未設定)';
       const spend = toNumber(item.metrics?.cost_micros) / 1_000_000;
       const mediaCv = toNullableNumber(item.metrics?.conversions);
       rows.push({
         platform: 'google',
+        accountId: customerId,
+        accountName,
         adId,
         adName,
         spend,
@@ -173,12 +177,11 @@ async function fetchGoogleAdsAdInsights(
         cpa: mediaCv && mediaCv > 0 ? spend / mediaCv : null,
       });
     }
+    return rows;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Google Ads API request failed.';
-    throw new Error(message);
+    throw new Error(`Google Ads API error for ${accountName} (${customerId}): ${message}`);
   }
-
-  return rows;
 }
 
 function normalizeLinePath(path: string): string {
@@ -223,10 +226,11 @@ function buildLineHeaders(path: string, body?: string, contentType?: string): Re
 }
 
 async function fetchLineAdInsights(
-  accountId: string,
+  account: AccountSummary,
   startDate: string,
   endDate: string
 ): Promise<AdRankingRow[]> {
+  const { accountId, accountName } = account;
   const endpoint = LINE_AD_REPORT_ENDPOINT.replace('{adAccountId}', accountId);
   const url = `${LINE_API_BASE_URL.replace(/\/$/, '')}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
   const rows: AdRankingRow[] = [];
@@ -269,6 +273,8 @@ async function fetchLineAdInsights(
       const mediaCv = rawMediaCv === undefined ? null : toNullableNumber(rawMediaCv);
       rows.push({
         platform: 'line',
+        accountId,
+        accountName,
         adId,
         adName,
         spend,
@@ -440,10 +446,11 @@ function resolveMetaResultValue(row: MetaInsightRow): number | null {
 }
 
 async function fetchMetaAdInsights(
-  accountId: string,
+  account: AccountSummary,
   startDate: string,
   endDate: string
 ): Promise<AdRankingRow[]> {
+  const { accountId, accountName } = account;
   if (!META_ACCESS_TOKEN) {
     throw new Error('META_ACCESS_TOKEN is not set.');
   }
@@ -490,6 +497,8 @@ async function fetchMetaAdInsights(
       const mediaCv = resolveMetaResultValue(row);
       rows.push({
         platform: 'meta',
+        accountId,
+        accountName,
         adId: row.ad_id ?? '',
         adName: row.ad_name ?? '(名前未設定)',
         spend,
@@ -560,10 +569,11 @@ async function fetchTikTokAdNames(
 }
 
 async function fetchTikTokAdInsights(
-  advertiserId: string,
+  account: AccountSummary,
   startDate: string,
   endDate: string
 ): Promise<AdRankingRow[]> {
+  const { accountId: advertiserId, accountName } = account;
   if (!TIKTOK_ACCESS_TOKEN) {
     throw new Error('TIKTOK_ACCESS_TOKEN is not set.');
   }
@@ -623,6 +633,8 @@ async function fetchTikTokAdInsights(
       }
       rows.push({
         platform: 'tiktok',
+        accountId: advertiserId,
+        accountName,
         adId,
         adName: row.dimensions?.ad_name ?? '',
         spend,
@@ -660,14 +672,7 @@ export async function fetchAdRanking(params: {
   endDate: string;
 }): Promise<AdRankingRow[]> {
   const { projectName, startDate, endDate } = params;
-  console.log('[fetchAdRanking] Starting for project:', projectName);
   const accounts = await getProjectAccounts(projectName);
-  console.log('[fetchAdRanking] Accounts:', {
-    meta: accounts.meta.length,
-    tiktok: accounts.tiktok.length,
-    google: accounts.google.length,
-    line: accounts.line.length,
-  });
 
   if (
     accounts.meta.length === 0 &&
@@ -675,14 +680,20 @@ export async function fetchAdRanking(params: {
     accounts.google.length === 0 &&
     accounts.line.length === 0
   ) {
-    console.log('[fetchAdRanking] No accounts found');
     return [];
   }
 
   const metaRows = accounts.meta.length
     ? (
         await Promise.all(
-          accounts.meta.map((account) => fetchMetaAdInsights(account.accountId, startDate, endDate))
+          accounts.meta.map(async (account) => {
+            try {
+              return await fetchMetaAdInsights(account, startDate, endDate);
+            } catch (error) {
+              // Silently skip failed accounts
+              return [];
+            }
+          })
         )
       ).flat()
     : [];
@@ -690,9 +701,14 @@ export async function fetchAdRanking(params: {
   const tiktokRows = accounts.tiktok.length
     ? (
         await Promise.all(
-          accounts.tiktok.map((account) =>
-            fetchTikTokAdInsights(account.accountId, startDate, endDate)
-          )
+          accounts.tiktok.map(async (account) => {
+            try {
+              return await fetchTikTokAdInsights(account, startDate, endDate);
+            } catch (error) {
+              // Silently skip failed accounts
+              return [];
+            }
+          })
         )
       ).flat()
     : [];
@@ -700,9 +716,14 @@ export async function fetchAdRanking(params: {
   const googleRows = accounts.google.length
     ? (
         await Promise.all(
-          accounts.google.map((account) =>
-            fetchGoogleAdsAdInsights(account.accountId, startDate, endDate)
-          )
+          accounts.google.map(async (account) => {
+            try {
+              return await fetchGoogleAdsAdInsights(account, startDate, endDate);
+            } catch (error) {
+              // Silently skip failed accounts
+              return [];
+            }
+          })
         )
       ).flat()
     : [];
@@ -710,7 +731,14 @@ export async function fetchAdRanking(params: {
   const lineRows = accounts.line.length
     ? (
         await Promise.all(
-          accounts.line.map((account) => fetchLineAdInsights(account.accountId, startDate, endDate))
+          accounts.line.map(async (account) => {
+            try {
+              return await fetchLineAdInsights(account, startDate, endDate);
+            } catch (error) {
+              // Silently skip failed accounts
+              return [];
+            }
+          })
         )
       ).flat()
     : [];
