@@ -172,7 +172,6 @@ function buildPlatformDetailedMetrics(
   const actualAdCost = base.actualAdCost;
   const actualCv = base.actualCv;
   const totalClicks = base.totalClicks;
-  const totalImpressions = base.totalImpressions;
   const mCv = base.mCv;
 
   const actualCpa = actualCv > 0 ? actualAdCost / actualCv : 0;

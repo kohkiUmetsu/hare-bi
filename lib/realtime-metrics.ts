@@ -274,18 +274,18 @@ function pickSectionByCampaignName(
 ): SectionConfig | null {
   const trimmed = campaignName.trim();
 
-  let bestPrefix: { section: SectionConfig; length: number } | null = null;
+  let bestSection: SectionConfig | null = null;
+  let bestLength = 0;
   sections.forEach((section) => {
     section.campaignPrefixes.forEach((prefix) => {
-      if (prefix && trimmed.startsWith(prefix)) {
-        if (!bestPrefix || prefix.length > bestPrefix.length) {
-          bestPrefix = { section, length: prefix.length };
-        }
+      if (prefix && trimmed.startsWith(prefix) && prefix.length > bestLength) {
+        bestSection = section;
+        bestLength = prefix.length;
       }
     });
   });
-  if (bestPrefix) {
-    return bestPrefix.section;
+  if (bestSection) {
+    return bestSection;
   }
 
   for (const section of sections) {
@@ -1238,10 +1238,7 @@ function buildSectionConfigs(
   return configs;
 }
 
-function buildPlatformMappings(
-  projectPlatforms: PlatformOption[],
-  _sectionConfigs: SectionConfig[]
-): {
+function buildPlatformMappings(projectPlatforms: PlatformOption[]): {
   platformBySectionType: Map<string, PlatformMapping>;
   platformLabels: Map<string, string>;
   platformSectionMap: Map<string, string>;
@@ -1333,10 +1330,7 @@ export async function fetchRealtimeProjectSnapshot(params: {
     projectSections
   );
   const sectionLabels = new Map(sectionConfigs.map((section) => [section.sectionId, section.label]));
-  const { platformBySectionType, platformLabels, platformSectionMap } = buildPlatformMappings(
-    projectPlatforms,
-    sectionConfigs
-  );
+  const { platformBySectionType, platformLabels, platformSectionMap } = buildPlatformMappings(projectPlatforms);
   const mspLinkMappings = buildMspLinkMappings(
     settings.platform_settings.filter((ps) => ps.project_name === projectName),
     sectionConfigs,

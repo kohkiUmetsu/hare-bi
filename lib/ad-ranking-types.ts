@@ -6,6 +6,8 @@ export type AdRankingRow = {
   accountName: string;
   adId: string;
   adName: string;
+  videoUrl?: string | null;
+  videoThumbnailUrl?: string | null;
   spend: number;
   mediaCv: number | null;
   cpa: number | null;

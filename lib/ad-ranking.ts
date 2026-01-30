@@ -28,6 +28,8 @@ type ProjectAccounts = {
   line: AccountSummary[];
 };
 
+type GoogleAdsCustomer = ReturnType<InstanceType<typeof GoogleAdsApi>['Customer']>;
+
 const META_RESULT_ACTION_TYPE = process.env.META_RESULT_ACTION_TYPE ?? '';
 const META_RESULT_ACTION_TARGET = process.env.META_RESULT_ACTION_TARGET ?? 'Cst_ABTestCV';
 const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN ?? '';
@@ -35,6 +37,7 @@ const TIKTOK_ACCESS_TOKEN = process.env.TIKTOK_ACCESS_TOKEN ?? '';
 const TIKTOK_RESULT_METRIC = process.env.TIKTOK_RESULT_METRIC ?? 'result';
 const TIKTOK_BUSINESS_ID = process.env.TIKTOK_BUSINESS_ID ?? '';
 const TIKTOK_API_BASE_URL = 'https://business-api.tiktok.com/open_api/v1.3';
+const TIKTOK_VIDEO_API_BASE_URL = process.env.TIKTOK_VIDEO_API_BASE_URL ?? '';
 const GOOGLE_ADS_DEVELOPER_TOKEN = process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? '';
 const GOOGLE_ADS_CLIENT_ID = process.env.GOOGLE_ADS_CLIENT_ID ?? '';
 const GOOGLE_ADS_CLIENT_SECRET = process.env.GOOGLE_ADS_CLIENT_SECRET ?? '';
@@ -46,6 +49,52 @@ const LINE_API_BASE_URL = process.env.LINE_API_BASE_URL ?? 'https://ads.line.me'
 const LINE_AD_REPORT_ENDPOINT =
   process.env.LINE_AD_REPORT_ENDPOINT ??
   '/api/v3/adaccounts/{adAccountId}/reports/online/ad';
+const AD_RANKING_DEBUG_RESPONSES = process.env.AD_RANKING_DEBUG_RESPONSES ?? '';
+
+function isTruthyEnv(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  return ['1', 'true', 'yes', 'on'].includes(normalized);
+}
+
+const SHOULD_LOG_AD_RANKING = isTruthyEnv(AD_RANKING_DEBUG_RESPONSES);
+
+function uniqueStrings(values: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  values.forEach((value) => {
+    if (!value) {
+      return;
+    }
+    const trimmed = value.trim();
+    if (!trimmed || seen.has(trimmed)) {
+      return;
+    }
+    seen.add(trimmed);
+    result.push(trimmed);
+  });
+  return result;
+}
+
+function buildTikTokVideoBaseUrls(): string[] {
+  const baseUrl = TIKTOK_VIDEO_API_BASE_URL || TIKTOK_API_BASE_URL;
+  const candidates: Array<string | null> = [TIKTOK_VIDEO_API_BASE_URL || null, baseUrl];
+
+  try {
+    const url = new URL(baseUrl);
+    const trimmedPath = url.pathname.replace(/\/+$/, '');
+    const match = trimmedPath.match(/\/v\d+(?:\.\d+)?$/);
+    if (match) {
+      const prefix = trimmedPath.slice(0, trimmedPath.length - match[0].length);
+      ['v1.3', 'v1.2', 'v1.1'].forEach((version) => {
+        candidates.push(`${url.origin}${prefix}/${version}`);
+      });
+    }
+  } catch {
+    // Ignore invalid base URL formats.
+  }
+
+  return uniqueStrings(candidates);
+}
 
 function toNumber(value: unknown): number {
   if (typeof value === 'number') {
@@ -73,6 +122,167 @@ function toNullableNumber(value: unknown): number | null {
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+}
+
+function pickFirstString(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed) {
+        return trimmed;
+      }
+    }
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        if (typeof entry === 'string') {
+          const trimmed = entry.trim();
+          if (trimmed) {
+            return trimmed;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function pickFirstId(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed) {
+        return trimmed;
+      }
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value);
+    }
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        if (typeof entry === 'string') {
+          const trimmed = entry.trim();
+          if (trimmed) {
+            return trimmed;
+          }
+        }
+        if (typeof entry === 'number' && Number.isFinite(entry)) {
+          return String(entry);
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function isUrlString(value: unknown): value is string {
+  return typeof value === 'string' && /^https?:\/\//i.test(value);
+}
+
+function findNestedUrl(
+  root: Record<string, unknown>,
+  keys: string[],
+  maxDepth = 4
+): string | null {
+  const queue: Array<{ value: unknown; depth: number }> = [{ value: root, depth: 0 }];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) {
+      continue;
+    }
+    const { value, depth } = current;
+    if (depth > maxDepth) {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((entry) => queue.push({ value: entry, depth: depth + 1 }));
+      continue;
+    }
+    if (!value || typeof value !== 'object') {
+      continue;
+    }
+    const record = value as Record<string, unknown>;
+    for (const key of keys) {
+      if (key in record) {
+        const candidate = record[key];
+        if (isUrlString(candidate)) {
+          return candidate;
+        }
+        if (Array.isArray(candidate)) {
+          const urlInArray = candidate.find((item) => isUrlString(item));
+          if (urlInArray) {
+            return urlInArray;
+          }
+        }
+      }
+    }
+    Object.values(record).forEach((entry) => queue.push({ value: entry, depth: depth + 1 }));
+  }
+
+  return null;
+}
+
+function findNestedStringByKey(
+  root: Record<string, unknown>,
+  keys: string[],
+  maxDepth = 4
+): string | null {
+  const queue: Array<{ value: unknown; depth: number }> = [{ value: root, depth: 0 }];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) {
+      continue;
+    }
+    const { value, depth } = current;
+    if (depth > maxDepth) {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((entry) => queue.push({ value: entry, depth: depth + 1 }));
+      continue;
+    }
+    if (!value || typeof value !== 'object') {
+      continue;
+    }
+    const record = value as Record<string, unknown>;
+    for (const key of keys) {
+      if (key in record) {
+        const candidate = record[key];
+        if (typeof candidate === 'string' && candidate.trim()) {
+          return candidate.trim();
+        }
+      }
+    }
+    Object.values(record).forEach((entry) => queue.push({ value: entry, depth: depth + 1 }));
+  }
+
+  return null;
+}
+
+function logAdRankingResponse(label: string, payload: unknown): void {
+  if (!SHOULD_LOG_AD_RANKING) {
+    return;
+  }
+  try {
+    const text = JSON.stringify(
+      payload,
+      (_key, value) => {
+        if (typeof value === 'string') {
+          return value.replace(/access_token=[^&\s"]+/gi, 'access_token=REDACTED');
+        }
+        return value;
+      },
+      2
+    );
+    console.log(`[AdRanking][${label}] ${text}`);
+  } catch {
+    console.log(`[AdRanking][${label}]`, payload);
+  }
 }
 
 async function readJsonResponse(response: Response, label: string): Promise<unknown> {
@@ -115,6 +325,314 @@ function base64UrlEncode(value: string | Buffer): string {
   return encoded.replace(/\+/g, '-').replace(/\//g, '_');
 }
 
+type MetaCreativeInfo = {
+  creativeId: string | null;
+  videoId: string | null;
+  thumbnailUrl: string | null;
+};
+
+type MetaVideoInfo = {
+  source: string | null;
+  picture: string | null;
+};
+
+function extractMetaCreativeInfo(creative: Record<string, unknown>): MetaCreativeInfo {
+  const storySpec = asRecord(creative.object_story_spec);
+  const videoData = storySpec ? asRecord(storySpec.video_data) : null;
+  const creativeId = pickFirstString(creative.id);
+  const videoId = pickFirstString(videoData?.video_id);
+  const thumbnailUrl = pickFirstString(creative.thumbnail_url);
+  return {
+    creativeId: creativeId ?? null,
+    videoId: videoId ?? null,
+    thumbnailUrl: thumbnailUrl ?? null,
+  };
+}
+
+async function fetchMetaCreativeMap(adIds: string[]): Promise<Record<string, MetaCreativeInfo>> {
+  if (!META_ACCESS_TOKEN || adIds.length === 0) {
+    return {};
+  }
+
+  const result: Record<string, MetaCreativeInfo> = {};
+  const chunks = chunkList(adIds, 50);
+
+  for (const chunk of chunks) {
+    const params = new URLSearchParams({
+      access_token: META_ACCESS_TOKEN,
+      fields:
+        'creative{thumbnail_url,video_id,object_story_spec{video_data{video_id,image_url},link_data{picture},photo_data{image_url}},asset_feed_spec{videos,images}}',
+    });
+    const url = `https://graph.facebook.com/v19.0/?ids=${chunk.join(',')}&${params.toString()}`;
+    const response: Response = await fetch(url, { cache: 'no-store' });
+    const payload = await readJsonResponse(response, 'Meta');
+    logAdRankingResponse('Meta creative', payload);
+    const payloadObject = typeof payload === 'object' && payload ? (payload as Record<string, unknown>) : null;
+    if (!response.ok) {
+      const message =
+        payloadObject && typeof payloadObject.error === 'object'
+          ? (payloadObject.error as { message?: string }).message
+          : 'Meta creative request failed.';
+      throw new Error(message ?? 'Meta creative request failed.');
+    }
+
+    if (!payloadObject) {
+      continue;
+    }
+
+    Object.entries(payloadObject).forEach(([adId, entry]) => {
+      const entryRecord = asRecord(entry);
+      if (!entryRecord || entryRecord.error) {
+        return;
+      }
+      const creative = asRecord(entryRecord.creative);
+      if (!creative) {
+        return;
+      }
+      result[adId] = extractMetaCreativeInfo(creative);
+    });
+  }
+
+  return result;
+}
+
+async function fetchMetaVideoMap(videoIds: string[]): Promise<Record<string, MetaVideoInfo>> {
+  if (!META_ACCESS_TOKEN || videoIds.length === 0) {
+    return {};
+  }
+
+  const result: Record<string, MetaVideoInfo> = {};
+  const chunks = chunkList(videoIds, 50);
+
+  for (const chunk of chunks) {
+    const params = new URLSearchParams({
+      access_token: META_ACCESS_TOKEN,
+      fields: 'source,picture',
+    });
+    const url = `https://graph.facebook.com/v19.0/?ids=${chunk.join(',')}&${params.toString()}`;
+    const response: Response = await fetch(url, { cache: 'no-store' });
+    const payload = await readJsonResponse(response, 'Meta');
+    logAdRankingResponse('Meta video', payload);
+    const payloadObject = typeof payload === 'object' && payload ? (payload as Record<string, unknown>) : null;
+    if (!response.ok) {
+      const message =
+        payloadObject && typeof payloadObject.error === 'object'
+          ? (payloadObject.error as { message?: string }).message
+          : 'Meta video request failed.';
+      throw new Error(message ?? 'Meta video request failed.');
+    }
+
+    if (!payloadObject) {
+      continue;
+    }
+
+    Object.entries(payloadObject).forEach(([videoId, entry]) => {
+      const entryRecord = asRecord(entry);
+      if (!entryRecord || entryRecord.error) {
+        return;
+      }
+      const source = pickFirstString(entryRecord.source);
+      const picture = pickFirstString(entryRecord.picture);
+      result[videoId] = {
+        source: source ?? null,
+        picture: picture ?? null,
+      };
+    });
+  }
+
+  return result;
+}
+
+async function attachMetaAdMedia(rows: AdRankingRow[]): Promise<void> {
+  const adIds = Array.from(new Set(rows.map((row) => row.adId).filter(Boolean)));
+  if (adIds.length === 0) {
+    return;
+  }
+
+  const creativeMap = await fetchMetaCreativeMap(adIds);
+  const videoIds = Array.from(
+    new Set(
+      Object.values(creativeMap)
+        .map((info) => info.videoId)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  const videoMap = await fetchMetaVideoMap(videoIds);
+
+  rows.forEach((row) => {
+    const creative = creativeMap[row.adId];
+    if (!creative) {
+      return;
+    }
+    const videoInfo = creative.videoId ? videoMap[creative.videoId] : null;
+    row.videoUrl = videoInfo?.source ?? null;
+    row.videoThumbnailUrl = creative.thumbnailUrl ?? videoInfo?.picture ?? null;
+  });
+}
+
+type GoogleVideoAssetInfo = {
+  adId: string;
+  assetNames: string[];
+};
+
+function collectGoogleVideoAssets(ad: unknown): string[] {
+  if (!ad || typeof ad !== 'object') {
+    return [];
+  }
+
+  const assets: string[] = [];
+
+  const pushAsset = (asset: unknown) => {
+    if (typeof asset === 'string') {
+      const trimmed = asset.trim();
+      if (trimmed) {
+        assets.push(trimmed);
+      }
+    }
+  };
+
+  const pushAssetList = (list: unknown) => {
+    if (!Array.isArray(list)) {
+      return;
+    }
+    list.forEach((item) => {
+      if (item && typeof item === 'object') {
+        pushAsset((item as { asset?: unknown }).asset);
+      }
+    });
+  };
+
+  const adRecord = ad as Record<string, unknown>;
+  const videoResponsiveAd = adRecord.video_responsive_ad as Record<string, unknown> | undefined;
+  const videoAd = adRecord.video_ad as Record<string, unknown> | undefined;
+  const videoAdAsset = (videoAd?.video as Record<string, unknown> | undefined)?.asset;
+  const responsiveDisplayAd = adRecord.responsive_display_ad as Record<string, unknown> | undefined;
+  const appAd = adRecord.app_ad as Record<string, unknown> | undefined;
+  const appPreRegistrationAd = adRecord.app_pre_registration_ad as Record<string, unknown> | undefined;
+  const appEngagementAd = adRecord.app_engagement_ad as Record<string, unknown> | undefined;
+  const localAd = adRecord.local_ad as Record<string, unknown> | undefined;
+  const demandGenVideoResponsiveAd = adRecord.demand_gen_video_responsive_ad as Record<string, unknown> | undefined;
+
+  pushAssetList(videoResponsiveAd?.videos);
+  pushAsset(videoAdAsset);
+  pushAssetList(responsiveDisplayAd?.youtube_videos);
+  pushAssetList(appAd?.youtube_videos);
+  pushAssetList(appPreRegistrationAd?.youtube_videos);
+  pushAssetList(appEngagementAd?.videos);
+  pushAssetList(localAd?.videos);
+  pushAssetList(demandGenVideoResponsiveAd?.videos);
+
+  return Array.from(new Set(assets));
+}
+
+function buildYoutubeWatchUrl(videoId: string): string {
+  return `https://www.youtube.com/watch?v=${videoId}`;
+}
+
+function buildYoutubeThumbnailUrl(videoId: string): string {
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+}
+
+async function fetchGoogleAdVideoAssets(
+  customer: GoogleAdsCustomer,
+  adIds: string[]
+): Promise<GoogleVideoAssetInfo[]> {
+  const results: GoogleVideoAssetInfo[] = [];
+  const chunks = chunkList(adIds, 100);
+
+  for (const chunk of chunks) {
+    const query = `
+      SELECT
+        ad_group_ad.ad.id,
+        ad_group_ad.ad.video_responsive_ad.videos,
+        ad_group_ad.ad.video_ad.video.asset,
+        ad_group_ad.ad.responsive_display_ad.youtube_videos,
+        ad_group_ad.ad.app_ad.youtube_videos,
+        ad_group_ad.ad.app_pre_registration_ad.youtube_videos,
+        ad_group_ad.ad.app_engagement_ad.videos,
+        ad_group_ad.ad.local_ad.videos,
+        ad_group_ad.ad.demand_gen_video_responsive_ad.videos
+      FROM ad_group_ad
+      WHERE ad_group_ad.ad.id IN (${chunk.join(',')})
+    `;
+    const response = await customer.query(query);
+    logAdRankingResponse('GoogleAds video_responsive_ad', response);
+    for (const item of response) {
+      const adId = item.ad_group_ad?.ad?.id ? String(item.ad_group_ad.ad.id) : '';
+      const assetNames = collectGoogleVideoAssets(item.ad_group_ad?.ad);
+      if (adId && assetNames.length > 0) {
+        results.push({ adId, assetNames });
+      }
+    }
+  }
+
+  return results;
+}
+
+async function fetchGoogleYoutubeVideoIds(
+  customer: GoogleAdsCustomer,
+  assetNames: string[]
+): Promise<Record<string, string>> {
+  if (assetNames.length === 0) {
+    return {};
+  }
+
+  const map: Record<string, string> = {};
+  const chunks = chunkList(assetNames, 100);
+
+  for (const chunk of chunks) {
+    const escaped = chunk.map((value) => `'${value.replace(/'/g, "\\'")}'`).join(',');
+    const query = `
+      SELECT
+        asset.resource_name,
+        asset.youtube_video_asset.youtube_video_id
+      FROM asset
+      WHERE asset.resource_name IN (${escaped})
+    `;
+    const response = await customer.query(query);
+    logAdRankingResponse('GoogleAds youtube_video_asset', response);
+    for (const item of response) {
+      const resourceName = item.asset?.resource_name ?? '';
+      const youtubeId = item.asset?.youtube_video_asset?.youtube_video_id ?? '';
+      if (resourceName && youtubeId) {
+        map[resourceName] = youtubeId;
+      }
+    }
+  }
+
+  return map;
+}
+
+async function attachGoogleAdMedia(
+  customer: GoogleAdsCustomer,
+  rows: AdRankingRow[]
+): Promise<void> {
+  const adIds = Array.from(
+    new Set(rows.map((row) => row.adId).filter((id) => id && /^\d+$/.test(id)))
+  );
+  if (adIds.length === 0) {
+    return;
+  }
+
+  const assetInfo = await fetchGoogleAdVideoAssets(customer, adIds);
+  const assetNames = Array.from(new Set(assetInfo.flatMap((entry) => entry.assetNames)));
+  const youtubeMap = await fetchGoogleYoutubeVideoIds(customer, assetNames);
+
+  const adAssetMap = new Map<string, string[]>();
+  assetInfo.forEach((entry) => {
+    adAssetMap.set(entry.adId, entry.assetNames);
+  });
+
+  rows.forEach((row) => {
+    const assets = adAssetMap.get(row.adId) ?? [];
+    const youtubeId = assets.map((asset) => youtubeMap[asset]).find(Boolean);
+    if (youtubeId) {
+      row.videoUrl = buildYoutubeWatchUrl(youtubeId);
+      row.videoThumbnailUrl = buildYoutubeThumbnailUrl(youtubeId);
+    }
+  });
+}
+
 async function fetchGoogleAdsAdInsights(
   account: AccountSummary,
   startDate: string,
@@ -153,6 +671,7 @@ async function fetchGoogleAdsAdInsights(
       metrics.conversions
     FROM ad_group_ad
     WHERE segments.date BETWEEN '${startDate}' AND '${endDate}'
+      AND metrics.cost_micros > 0
     ORDER BY metrics.cost_micros DESC
   `;
 
@@ -160,11 +679,15 @@ async function fetchGoogleAdsAdInsights(
     const rows: AdRankingRow[] = [];
     // Use query() instead of queryStream() to avoid stream-chain issues in Next.js
     const response = await customer.query(query);
+    logAdRankingResponse(`GoogleAds ad_group_ad ${accountName}`, response);
 
     for (const item of response) {
       const adId = item.ad_group_ad?.ad?.id ? String(item.ad_group_ad.ad.id) : '';
       const adName = item.ad_group_ad?.ad?.name ?? adId ?? '(名前未設定)';
       const spend = toNumber(item.metrics?.cost_micros) / 1_000_000;
+      if (spend <= 0) {
+        continue;
+      }
       const mediaCv = toNullableNumber(item.metrics?.conversions);
       rows.push({
         platform: 'google',
@@ -176,6 +699,11 @@ async function fetchGoogleAdsAdInsights(
         mediaCv,
         cpa: mediaCv && mediaCv > 0 ? spend / mediaCv : null,
       });
+    }
+    try {
+      await attachGoogleAdMedia(customer, rows);
+    } catch {
+      // Skip video assets if API fields are unavailable
     }
     return rows;
   } catch (error) {
@@ -225,6 +753,186 @@ function buildLineHeaders(path: string, body?: string, contentType?: string): Re
   return headers;
 }
 
+const LINE_VIDEO_KEYS = [
+  'videoUrl',
+  'video_url',
+  'videoUrlList',
+  'video_url_list',
+  'videoPreviewUrl',
+  'video_preview_url',
+  'previewUrl',
+  'preview_url',
+  'playUrl',
+  'play_url',
+];
+
+const LINE_THUMBNAIL_KEYS = [
+  'thumbnailUrl',
+  'thumbnail_url',
+  'imageUrl',
+  'image_url',
+  'imageUrlList',
+  'image_url_list',
+  'previewImageUrl',
+  'preview_image_url',
+  'coverUrl',
+  'cover_url',
+];
+
+function extractLineMedia(record: Record<string, unknown>, adInfo: Record<string, unknown> | null) {
+  const roots: Record<string, unknown>[] = [];
+  if (adInfo) {
+    roots.push(adInfo);
+  }
+  const creativeCandidates = [
+    record.creative,
+    record.creative_info,
+    record.creativeInfo,
+    record.adCreative,
+    record.ad_creative,
+  ];
+  creativeCandidates.forEach((candidate) => {
+    const asCandidate = asRecord(candidate);
+    if (asCandidate) {
+      roots.push(asCandidate);
+    }
+  });
+  roots.push(record);
+
+  let videoUrl: string | null = null;
+  for (const root of roots) {
+    videoUrl = findNestedUrl(root, LINE_VIDEO_KEYS);
+    if (videoUrl) {
+      break;
+    }
+  }
+
+  let thumbnailUrl: string | null = null;
+  for (const root of roots) {
+    thumbnailUrl = findNestedUrl(root, LINE_THUMBNAIL_KEYS);
+    if (thumbnailUrl) {
+      break;
+    }
+  }
+
+  return { videoUrl, thumbnailUrl };
+}
+
+async function fetchLineMediaAssets(
+  accountId: string
+): Promise<Record<string, { videoUrl: string | null; thumbnailUrl: string | null; name: string | null }>> {
+  const result: Record<string, { videoUrl: string | null; thumbnailUrl: string | null; name: string | null }> = {};
+
+  try {
+    let page = 1;
+    const size = 100;
+
+    while (true) {
+      const endpoint = `/v3/adaccounts/${accountId}/media`;
+      const normalizedEndpoint = normalizeLinePath(endpoint);
+      const url = `${LINE_API_BASE_URL.replace(/\/$/, '')}${normalizedEndpoint}`;
+      const params = new URLSearchParams({
+        page: String(page),
+        size: String(size),
+      });
+      const headers = buildLineHeaders(endpoint);
+
+      const response: Response = await fetch(`${url}?${params.toString()}`, {
+        headers,
+        cache: 'no-store'
+      });
+      const payload = await readJsonResponse(response, 'LINE');
+      logAdRankingResponse('LINE media', payload);
+
+      if (!response.ok) {
+        if (SHOULD_LOG_AD_RANKING) {
+          const message = typeof payload === 'object' && payload && 'message' in payload
+            ? (payload as { message?: string }).message
+            : 'LINE media API request failed.';
+          console.log(`[AdRanking][LINE media fetch failed] ${message}`);
+        }
+        break;
+      }
+
+      const payloadObject = asRecord(payload);
+      if (!payloadObject) {
+        break;
+      }
+
+      const datas = Array.isArray(payloadObject.datas) ? payloadObject.datas : [];
+
+      datas.forEach((media) => {
+        const mediaRecord = asRecord(media);
+        if (!mediaRecord) {
+          return;
+        }
+
+        const mediaId = mediaRecord.id ? String(mediaRecord.id) : null;
+        const mediaName = typeof mediaRecord.name === 'string' ? mediaRecord.name : null;
+
+        if (!mediaId) {
+          return;
+        }
+
+        // Get sourceUrl from ObsObject
+        const obsObject = asRecord(mediaRecord.object);
+        const sourceUrl = obsObject && typeof obsObject.sourceUrl === 'string' ? obsObject.sourceUrl : null;
+
+        // Determine if it's a video or image based on mediaType
+        const mediaType = typeof mediaRecord.mediaType === 'string' ? mediaRecord.mediaType : null;
+        let videoUrl: string | null = null;
+        let thumbnailUrl: string | null = null;
+
+        if (sourceUrl) {
+          if (mediaType === 'VIDEO') {
+            videoUrl = sourceUrl;
+          } else if (mediaType === 'IMAGE') {
+            thumbnailUrl = sourceUrl;
+          } else {
+            // Fallback: try to detect from URL or use as both
+            thumbnailUrl = sourceUrl;
+          }
+        }
+
+        // Also check other possible URL fields as fallback
+        if (!videoUrl && !thumbnailUrl) {
+          videoUrl = findNestedUrl(mediaRecord, LINE_VIDEO_KEYS);
+          thumbnailUrl = thumbnailUrl ?? findNestedUrl(mediaRecord, LINE_THUMBNAIL_KEYS);
+
+          if (obsObject && !videoUrl && !thumbnailUrl) {
+            videoUrl = findNestedUrl(obsObject, LINE_VIDEO_KEYS);
+            thumbnailUrl = thumbnailUrl ?? findNestedUrl(obsObject, LINE_THUMBNAIL_KEYS);
+          }
+        }
+
+        if (videoUrl || thumbnailUrl || mediaName) {
+          result[mediaId] = {
+            videoUrl,
+            thumbnailUrl,
+            name: mediaName,
+          };
+        }
+      });
+
+      const paging = asRecord(payloadObject.paging);
+      const totalPagesRaw = paging?.totalPages ?? paging?.total_pages ?? paging?.totalPage;
+      const totalPages = totalPagesRaw ? Number(totalPagesRaw) : null;
+
+      if (!datas.length || (totalPages !== null && page >= totalPages)) {
+        break;
+      }
+      page += 1;
+    }
+  } catch (error) {
+    if (SHOULD_LOG_AD_RANKING) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.log(`[AdRanking][LINE media fetch failed] error=${message}`);
+    }
+  }
+
+  return result;
+}
+
 async function fetchLineAdInsights(
   account: AccountSummary,
   startDate: string,
@@ -247,6 +955,7 @@ async function fetchLineAdInsights(
     const headers = buildLineHeaders(endpoint);
     const response: Response = await fetch(`${url}?${params.toString()}`, { headers });
     const payload = await readJsonResponse(response, 'LINE');
+    logAdRankingResponse('LINE report', payload);
     // console.log('[AdRanking][LINE] response', payload);
     if (!response.ok) {
       const message =
@@ -265,10 +974,14 @@ async function fetchLineAdInsights(
         (record.ad as { id?: string | number; name?: string } | undefined) ??
         (record.adGroup as { id?: string | number; name?: string } | undefined) ??
         (record.adgroup as { id?: string | number; name?: string } | undefined);
+      const media = extractLineMedia(record, asRecord(adInfo));
       const stats = record.statistics as Record<string, unknown> | undefined;
       const adId = adInfo?.id ? String(adInfo.id) : String((record as { adId?: string | number }).adId ?? '');
       const adName = adInfo?.name ?? String((record as { adName?: string }).adName ?? adId ?? '(名前未設定)');
       const spend = toNumber(stats?.cost ?? stats?.spend);
+      if (spend <= 0) {
+        return;
+      }
       const rawMediaCv = stats?.cv ?? stats?.conversions ?? stats?.conversion;
       const mediaCv = rawMediaCv === undefined ? null : toNullableNumber(rawMediaCv);
       rows.push({
@@ -277,6 +990,8 @@ async function fetchLineAdInsights(
         accountName,
         adId,
         adName,
+        videoUrl: media.videoUrl,
+        videoThumbnailUrl: media.thumbnailUrl,
         spend,
         mediaCv,
         cpa: mediaCv && mediaCv > 0 ? spend / mediaCv : null,
@@ -290,6 +1005,45 @@ async function fetchLineAdInsights(
       break;
     }
     page += 1;
+  }
+
+  // Fetch media assets once for the account
+  if (rows.some((row) => !row.videoUrl && !row.videoThumbnailUrl)) {
+    try {
+      const mediaMap = await fetchLineMediaAssets(accountId);
+
+      // Try to match media to ads by media name or ID
+      rows.forEach((row) => {
+        if (row.videoUrl || row.videoThumbnailUrl) {
+          return;
+        }
+
+        // Look for media that matches the ad name
+        // Ad name often contains the media file name (e.g., "10_shiroru_display_6_9.png")
+        for (const [mediaId, media] of Object.entries(mediaMap)) {
+          const matched =
+            // Check if media name matches ad name
+            (media.name && row.adName.includes(media.name)) ||
+            (media.name && media.name.includes(row.adName)) ||
+            // Check if ad name contains media ID
+            row.adName.includes(mediaId) ||
+            // Check if media ID equals ad ID
+            mediaId === row.adId;
+
+          if (matched) {
+            row.videoUrl = row.videoUrl ?? media.videoUrl;
+            row.videoThumbnailUrl = row.videoThumbnailUrl ?? media.thumbnailUrl;
+            break;
+          }
+        }
+      });
+    } catch (error) {
+      // Skip media fetch if API fails
+      if (SHOULD_LOG_AD_RANKING) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.log(`[AdRanking][LINE media fetch failed] error=${message}`);
+      }
+    }
   }
 
   return rows;
@@ -462,6 +1216,7 @@ async function fetchMetaAdInsights(
     fields: 'ad_id,ad_name,spend,conversions,results',
     action_breakdowns: 'action_type,action_target_id',
     use_account_attribution_setting: 'true',
+    filtering: JSON.stringify([{ field: 'spend', operator: 'GREATER_THAN', value: 0 }]),
     time_range: JSON.stringify({ since: startDate, until: endDate }),
     limit: '500',
   });
@@ -471,6 +1226,7 @@ async function fetchMetaAdInsights(
   while (nextUrl) {
     const response: Response = await fetch(nextUrl, { cache: 'no-store' });
     const payload = await readJsonResponse(response, 'Meta');
+    logAdRankingResponse('Meta insights', payload);
     // console.log('[AdRanking][Meta] response', JSON.stringify(payload, null, 2));
     if (!response.ok) {
       const message =
@@ -494,6 +1250,9 @@ async function fetchMetaAdInsights(
         : [];
     data.forEach((row) => {
       const spend = toNumber(row.spend);
+      if (spend <= 0) {
+        return;
+      }
       const mediaCv = resolveMetaResultValue(row);
       rows.push({
         platform: 'meta',
@@ -514,6 +1273,12 @@ async function fetchMetaAdInsights(
     nextUrl = nextValue ?? null;
   }
 
+  try {
+    await attachMetaAdMedia(rows);
+  } catch {
+    // Skip creative media if API fails
+  }
+
   return rows;
 }
 
@@ -522,16 +1287,138 @@ type TikTokReportRow = {
   metrics?: Record<string, string>;
 };
 
-async function fetchTikTokAdNames(
+type TikTokAdMetadata = {
+  name?: string;
+  videoId?: string | null;
+  videoUrl?: string | null;
+  thumbnailUrl?: string | null;
+};
+
+function extractTikTokVideoUrl(item: Record<string, unknown>): string | null {
+  // TikTok v1.3 API returns preview_url as the main video URL
+  return pickFirstString(item.preview_url);
+}
+
+function extractTikTokThumbnailUrl(item: Record<string, unknown>): string | null {
+  // TikTok v1.3 API returns video_cover_url as the main thumbnail URL
+  return pickFirstString(item.video_cover_url);
+}
+
+function extractTikTokVideoId(item: Record<string, unknown>): string | null {
+  const direct = pickFirstId(item.video_id, item.videoId);
+  if (direct) {
+    return direct;
+  }
+  const nested = findNestedStringByKey(item, ['video_id', 'videoId']);
+  return nested ?? null;
+}
+
+async function fetchTikTokVideoInfo(
+  advertiserId: string,
+  videoIds: string[]
+): Promise<Record<string, { videoUrl: string | null; thumbnailUrl: string | null }>> {
+  if (!TIKTOK_ACCESS_TOKEN || videoIds.length === 0) {
+    return {};
+  }
+
+  const headers = buildTikTokHeaders();
+  const chunks = chunkList(videoIds, 20);
+  const result: Record<string, { videoUrl: string | null; thumbnailUrl: string | null }> = {};
+  const baseUrls = buildTikTokVideoBaseUrls();
+  const paramBuilders = [
+    {
+      label: 'json-array',
+      build: (ids: string[]) => {
+        const params = new URLSearchParams({ advertiser_id: advertiserId });
+        // TikTok v1.3 expects video_ids as JSON array string in query param
+        params.set('video_ids', JSON.stringify(ids));
+        return params;
+      },
+    },
+  ];
+
+  for (const chunk of chunks) {
+    const endpoints = baseUrls.map((baseUrl) => ({ url: `${baseUrl}/file/video/ad/info/`, method: 'GET' as const }));
+    let payload: unknown = null;
+    let payloadObject: Record<string, unknown> | null = null;
+    let success = false;
+
+    for (const endpoint of endpoints) {
+      for (const builder of paramBuilders) {
+        const requestUrl = `${endpoint.url}?${builder.build(chunk).toString()}`;
+        const response = await fetch(requestUrl, {
+          headers,
+          cache: 'no-store',
+          method: endpoint.method,
+        });
+        try {
+          payload = await readJsonResponse(response, 'TikTok');
+        } catch (error) {
+          if (SHOULD_LOG_AD_RANKING) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.log(
+              `[AdRanking][TikTok video attempt failed] ${endpoint.method} ${endpoint.url} format=${builder.label} ${message}`
+            );
+          }
+          continue;
+        }
+        payloadObject = typeof payload === 'object' && payload ? (payload as Record<string, unknown>) : null;
+        if (response.ok && !(payloadObject && payloadObject.code)) {
+          success = true;
+          break;
+        }
+        if (SHOULD_LOG_AD_RANKING) {
+          const code = payloadObject?.code;
+          const message = payloadObject && typeof payloadObject.message === 'string' ? payloadObject.message : 'n/a';
+          const requestId = payloadObject && typeof payloadObject.request_id === 'string' ? payloadObject.request_id : 'n/a';
+          console.log(
+            `[AdRanking][TikTok video attempt failed] ${endpoint.method} ${endpoint.url} format=${builder.label} status=${response.status} code=${code ?? 'n/a'} message=${message} request_id=${requestId}`
+          );
+        }
+      }
+      if (success) {
+        break;
+      }
+    }
+
+    if (!success || !payloadObject) {
+      continue;
+    }
+
+    logAdRankingResponse('TikTok video', payload);
+
+    const list =
+      payloadObject &&
+      typeof payloadObject.data === 'object' &&
+      payloadObject.data &&
+      Array.isArray((payloadObject.data as { list?: unknown }).list)
+        ? (payloadObject.data as { list: Array<Record<string, unknown>> }).list
+        : [];
+    list.forEach((item) => {
+      const videoId = extractTikTokVideoId(item);
+      if (!videoId) {
+        return;
+      }
+      result[videoId] = {
+        videoUrl: extractTikTokVideoUrl(item),
+        thumbnailUrl: extractTikTokThumbnailUrl(item),
+      };
+    });
+  }
+
+  return result;
+}
+
+async function fetchTikTokAdMetadata(
   advertiserId: string,
   adIds: string[]
-): Promise<Record<string, string>> {
+): Promise<Record<string, TikTokAdMetadata>> {
   if (adIds.length === 0) {
     return {};
   }
 
   const headers = buildTikTokHeaders();
-  const nameMap: Record<string, string> = {};
+  const metadataMap: Record<string, TikTokAdMetadata> = {};
 
   for (const chunk of chunkList(adIds, 100)) {
     const params = new URLSearchParams({
@@ -545,6 +1432,7 @@ async function fetchTikTokAdNames(
       { headers, cache: 'no-store' }
     );
     const payload = await readJsonResponse(response, 'TikTok');
+    logAdRankingResponse('TikTok ad/get', payload);
     // console.log('[AdRanking][TikTok] ad/get response', JSON.stringify(payload, null, 2));
     const payloadObject = typeof payload === 'object' && payload ? (payload as Record<string, unknown>) : null;
     if (!response.ok || (payloadObject && payloadObject.code)) {
@@ -556,16 +1444,57 @@ async function fetchTikTokAdNames(
       typeof payloadObject.data === 'object' &&
       payloadObject.data &&
       Array.isArray((payloadObject.data as { list?: unknown }).list)
-        ? (payloadObject.data as { list: Array<{ ad_id?: string; ad_name?: string }> }).list
+        ? (payloadObject.data as { list: Array<Record<string, unknown>> }).list
         : [];
-    list.forEach((item: { ad_id?: string; ad_name?: string }) => {
-      if (item?.ad_id) {
-        nameMap[item.ad_id] = item.ad_name ?? '';
+    list.forEach((item) => {
+      const rawAdId = item.ad_id ?? item.adId;
+      const adId = rawAdId !== undefined && rawAdId !== null ? String(rawAdId) : '';
+      if (!adId) {
+        return;
+      }
+      const adName = pickFirstString(item.ad_name, item.display_name, item.name);
+      const videoId = extractTikTokVideoId(item);
+      metadataMap[adId] = {
+        name: adName ?? undefined,
+        videoId: videoId ?? null,
+        videoUrl: extractTikTokVideoUrl(item),
+        thumbnailUrl: extractTikTokThumbnailUrl(item),
+      };
+    });
+  }
+
+  const videoIds = Array.from(
+    new Set(Object.values(metadataMap).map((meta) => meta.videoId).filter((id): id is string => Boolean(id)))
+  );
+  if (videoIds.length > 0) {
+    logAdRankingResponse('TikTok video ids', { count: videoIds.length, videoIds });
+    let videoMap: Record<string, { videoUrl: string | null; thumbnailUrl: string | null }> = {};
+    try {
+      videoMap = await fetchTikTokVideoInfo(advertiserId, videoIds);
+    } catch (error) {
+      if (SHOULD_LOG_AD_RANKING) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.log(`[AdRanking][TikTok video error] ${message}`);
+      }
+    }
+    Object.values(metadataMap).forEach((meta) => {
+      if (!meta.videoId) {
+        return;
+      }
+      const info = videoMap[meta.videoId];
+      if (!info) {
+        return;
+      }
+      if (!meta.videoUrl && info.videoUrl) {
+        meta.videoUrl = info.videoUrl;
+      }
+      if (!meta.thumbnailUrl && info.thumbnailUrl) {
+        meta.thumbnailUrl = info.thumbnailUrl;
       }
     });
   }
 
-  return nameMap;
+  return metadataMap;
 }
 
 async function fetchTikTokAdInsights(
@@ -604,6 +1533,7 @@ async function fetchTikTokAdInsights(
     );
 
     const payload = await readJsonResponse(response, 'TikTok');
+    logAdRankingResponse('TikTok report', payload);
     // console.log('[AdRanking][TikTok] response', JSON.stringify(payload, null, 2));
     const payloadObject = typeof payload === 'object' && payload ? (payload as Record<string, unknown>) : null;
     const payloadMessage = payloadObject && typeof payloadObject.message === 'string' ? payloadObject.message : undefined;
@@ -625,6 +1555,9 @@ async function fetchTikTokAdInsights(
     list.forEach((row) => {
       const adId = row.dimensions?.ad_id ?? '';
       const spend = toNumber(row.metrics?.spend);
+      if (spend <= 0) {
+        return;
+      }
       const mediaCvValue =
         row.metrics?.[TIKTOK_RESULT_METRIC] ?? row.metrics?.result ?? row.metrics?.results;
       const mediaCv = mediaCvValue === undefined ? null : toNullableNumber(mediaCvValue);
@@ -655,12 +1588,29 @@ async function fetchTikTokAdInsights(
 
   if (rows.length > 0) {
     const uniqueAdIds = Array.from(new Set(adIds.filter(Boolean)));
-    const nameMap = await fetchTikTokAdNames(advertiserId, uniqueAdIds);
-    rows.forEach((row) => {
-      if (!row.adName) {
-        row.adName = nameMap[row.adId] || row.adId || '(名前未設定)';
-      }
-    });
+    try {
+      const metadataMap = await fetchTikTokAdMetadata(advertiserId, uniqueAdIds);
+      rows.forEach((row) => {
+        const meta = metadataMap[row.adId];
+        if (meta?.name && !row.adName) {
+          row.adName = meta.name;
+        }
+        if (!row.adName) {
+          row.adName = row.adId || '(名前未設定)';
+        }
+        if (meta) {
+          row.videoUrl = meta.videoUrl ?? row.videoUrl ?? null;
+          row.videoThumbnailUrl = meta.thumbnailUrl ?? row.videoThumbnailUrl ?? null;
+        }
+      });
+    } catch {
+      // Skip video metadata if API fails
+      rows.forEach((row) => {
+        if (!row.adName) {
+          row.adName = row.adId || '(名前未設定)';
+        }
+      });
+    }
   }
 
   return rows;
@@ -689,7 +1639,7 @@ export async function fetchAdRanking(params: {
           accounts.meta.map(async (account) => {
             try {
               return await fetchMetaAdInsights(account, startDate, endDate);
-            } catch (error) {
+            } catch {
               // Silently skip failed accounts
               return [];
             }
@@ -704,7 +1654,7 @@ export async function fetchAdRanking(params: {
           accounts.tiktok.map(async (account) => {
             try {
               return await fetchTikTokAdInsights(account, startDate, endDate);
-            } catch (error) {
+            } catch {
               // Silently skip failed accounts
               return [];
             }
@@ -719,7 +1669,7 @@ export async function fetchAdRanking(params: {
           accounts.google.map(async (account) => {
             try {
               return await fetchGoogleAdsAdInsights(account, startDate, endDate);
-            } catch (error) {
+            } catch {
               // Silently skip failed accounts
               return [];
             }
@@ -734,7 +1684,7 @@ export async function fetchAdRanking(params: {
           accounts.line.map(async (account) => {
             try {
               return await fetchLineAdInsights(account, startDate, endDate);
-            } catch (error) {
+            } catch {
               // Silently skip failed accounts
               return [];
             }
