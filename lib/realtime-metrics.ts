@@ -168,6 +168,14 @@ function addTotals(target: MetricTotals, delta: Partial<MetricTotals>) {
   target.platformCv += delta.platformCv ?? 0;
 }
 
+function resolveRealtimeTotals(totals: MetricTotals): MetricTotals {
+  const actualCv = totals.mspCv;
+  return {
+    ...totals,
+    actualCv,
+  };
+}
+
 function buildDailyMetricRow(date: string, totals: MetricTotals): DailyMetricRow {
   const actualAdCost = totals.actualAdCost;
   const mspCv = totals.mspCv;
@@ -1418,7 +1426,7 @@ export async function fetchRealtimeProjectSnapshot(params: {
     }
   });
 
-  const projectDaily = buildDailyMetricRow(targetDate, projectTotals);
+  const projectDaily = buildDailyMetricRow(targetDate, resolveRealtimeTotals(projectTotals));
   const sectionDailyMap = new Map<string, DailyMetricRow>();
   const platformDailyMap = new Map<string, DailyMetricRow>();
   const sectionBreakdownMap = new Map<string, MetricBreakdownRow>();
@@ -1427,15 +1435,17 @@ export async function fetchRealtimeProjectSnapshot(params: {
 
   sectionTotals.forEach((totals, sectionId) => {
     const label = sectionLabels.get(sectionId) ?? sectionId;
-    sectionDailyMap.set(sectionId, buildDailyMetricRow(targetDate, totals));
-    sectionBreakdownMap.set(sectionId, buildBreakdownRow(sectionId, label, totals));
+    const resolvedTotals = resolveRealtimeTotals(totals);
+    sectionDailyMap.set(sectionId, buildDailyMetricRow(targetDate, resolvedTotals));
+    sectionBreakdownMap.set(sectionId, buildBreakdownRow(sectionId, label, resolvedTotals));
   });
 
   platformTotals.forEach((totals, platformId) => {
     const label = platformLabels.get(platformId) ?? platformId;
-    platformDailyMap.set(platformId, buildDailyMetricRow(targetDate, totals));
-    platformBreakdownMap.set(platformId, buildBreakdownRow(platformId, label, totals));
-    platformDetailMap.set(platformId, buildPlatformDetailedMetrics(platformId, label, totals));
+    const resolvedTotals = resolveRealtimeTotals(totals);
+    platformDailyMap.set(platformId, buildDailyMetricRow(targetDate, resolvedTotals));
+    platformBreakdownMap.set(platformId, buildBreakdownRow(platformId, label, resolvedTotals));
+    platformDetailMap.set(platformId, buildPlatformDetailedMetrics(platformId, label, resolvedTotals));
   });
 
   return {
