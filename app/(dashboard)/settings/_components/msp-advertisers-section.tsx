@@ -75,6 +75,7 @@ export function MspAdvertisersSection({ advertisers }: MspAdvertisersSectionProp
               id="msp_id"
               name="id"
               required
+              placeholder="123"
               className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm font-mono"
             />
           </div>

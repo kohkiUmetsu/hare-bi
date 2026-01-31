@@ -76,7 +76,7 @@ export function GoogleAdsAccountsSection({ accounts }: GoogleAdsAccountsSectionP
               name="customer_id"
               required
               className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm font-mono"
-              placeholder="123-456-7890"
+              placeholder="1234567890"
             />
           </div>
 

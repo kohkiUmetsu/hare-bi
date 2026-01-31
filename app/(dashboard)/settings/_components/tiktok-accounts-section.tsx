@@ -75,6 +75,7 @@ export function TiktokAccountsSection({ accounts }: TiktokAccountsSectionProps) 
               id="tiktok_advertiser_id"
               name="advertiser_id"
               required
+              placeholder="123456789012345"
               className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm font-mono"
             />
           </div>

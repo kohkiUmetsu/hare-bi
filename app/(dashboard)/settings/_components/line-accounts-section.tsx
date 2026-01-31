@@ -75,6 +75,7 @@ export function LineAccountsSection({ accounts }: LineAccountsSectionProps) {
               id="line_account_id"
               name="account_id"
               required
+              placeholder="A12345678901"
               className="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm font-mono"
             />
           </div>
